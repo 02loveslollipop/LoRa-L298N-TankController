@@ -1,11 +1,18 @@
 #include <Arduino.h>
 #include "TankShift.h"
 
-// ---------- 74HC595 <-> ESP32 pins (use your wiring) ----------
-constexpr uint8_t kSER   = 21; // data
-constexpr uint8_t kCLK   = 19; // shift clock
-constexpr uint8_t kLATCH = 23; // latch
-constexpr uint8_t kOE    = 18; // output enable (active LOW)
+// ---------- 74HC595 <-> ESP pins (use your wiring) ----------
+// ESP8266 (NodeMCU) pins
+constexpr uint8_t kSER   = 5;  // D1
+constexpr uint8_t kCLK   = 4;  // D2
+constexpr uint8_t kLATCH = 14; // D5
+constexpr uint8_t kOE    = 12; // D6
+
+// ESP32 pins
+// constexpr uint8_t kSER   = 21;
+// constexpr uint8_t kCLK   = 19;
+// constexpr uint8_t kLATCH = 23;
+// constexpr uint8_t kOE    = 18;
 // ---------- Bit mapping (adjust if needed) ----------
 constexpr uint8_t L_IN1 = 0b00000001; // left motor IN1
 constexpr uint8_t L_IN2 = 0b00000010; // left motor IN2
@@ -52,7 +59,8 @@ void setup() {
   Serial.println("OE is active-LOW; keeping it LOW enables outputs.");
 
   Tank.begin();
-  Tank.stop();
+  Tank.forward();
+  Serial.println("Starting forward...");
 }
 
 void loop() {
