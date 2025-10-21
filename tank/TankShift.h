@@ -5,38 +5,45 @@ enum class TankState { STOP, FORWARD, BACKWARD, LEFT, RIGHT };
 
 class Tank {
 public:
-  // 74HC595 pins (ESP32 GPIOs)
-  Tank(uint8_t serPin, uint8_t clkPin, uint8_t latchPin, uint8_t oePin,
-       // bit masks for the 74HC595 output lines -> L293D inputs
-       uint8_t L_IN1_mask = 0b00000001, 
-       uint8_t L_IN2_mask = 0b00000010,
-       uint8_t R_IN1_mask = 0b00000100,
-       uint8_t R_IN2_mask = 0b00001000);
+  // Map each half-H bridge: IN1, IN2, PWM (ENA/ENB).
+  Tank(uint8_t leftIn1, uint8_t leftIn2, uint8_t leftPwm,
+       uint8_t rightIn1, uint8_t rightIn2, uint8_t rightPwm);
 
   void begin();
-  void forward();   // both forward
-  void backward();  // both backward
-  void left();      // spin left: left back, right fwd
-  void right();     // spin right: left fwd, right back
-  void stop();      // all low
+  void forward();   // both motors forward
+  void backward();  // both motors backward
+  void left();      // spin left: left back, right forward
+  void right();     // spin right: left forward, right back
+  void stop();      // disable both motors (coast)
 
+  void setSpeed(uint8_t leftSpeed, uint8_t rightSpeed); // Max PWM (0-255)
+  uint8_t leftSpeed()  const { return maxLeftSpeed_; }
+  uint8_t rightSpeed() const { return maxRightSpeed_; }
+  void setRamp(uint8_t step, uint16_t intervalMs);      // ramp resolution
+  void update();                                        // call every loop tick
   TankState state() const { return last_; }
 
-  // For debugging / customization
-  void writeRegister(uint8_t value);
-  uint8_t currentRegister() const { return reg_; }
-
 private:
-  uint8_t SER_, CLK_, LATCH_, OE_;
-  uint8_t L1_, L2_, R1_, R2_;
-  volatile uint8_t reg_ = 0;     // shadow of 74HC595 outputs
+  void setDir_(int leftDir, int rightDir); // -1 back, 0 stop, +1 forward
+  void apply_();
+  void drive_(uint8_t in1, uint8_t in2, uint8_t pwmPin, int command) const;
+  int stepToward_(int current, int target) const;
+
+  uint8_t leftIn1_, leftIn2_, leftPwm_;
+  uint8_t rightIn1_, rightIn2_, rightPwm_;
+
+  int targetLeftDir_ = 0;
+  int targetRightDir_ = 0;
+  int targetLeftCommand_ = 0;   // -255..255
+  int targetRightCommand_ = 0;  // -255..255
+  int currentLeftCommand_ = 0;  // -255..255
+  int currentRightCommand_ = 0; // -255..255
+
+  uint8_t maxLeftSpeed_ = 255;
+  uint8_t maxRightSpeed_ = 255;
+  uint8_t rampStep_ = 8;
+  uint16_t rampIntervalMs_ = 15;
+  unsigned long lastUpdateMs_ = 0;
+
   TankState last_ = TankState::STOP;
-
-  inline void pulse_(uint8_t pin) {
-    digitalWrite(pin, HIGH); delayMicroseconds(2);
-    digitalWrite(pin, LOW);  delayMicroseconds(2);
-  }
-
-  void setDir_(int leftDir, int rightDir);
-  // leftDir/rightDir: -1 back, 0 stop, +1 forward
 };

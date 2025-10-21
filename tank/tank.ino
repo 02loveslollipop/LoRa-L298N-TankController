@@ -1,38 +1,50 @@
 #include <Arduino.h>
 #include "TankShift.h"
 
-// ---------- 74HC595 <-> ESP pins (use your wiring) ----------
-// ESP8266 (NodeMCU) pins
-constexpr uint8_t kSER   = 5;  // D1
-constexpr uint8_t kCLK   = 4;  // D2
-constexpr uint8_t kLATCH = 14; // D5
-constexpr uint8_t kOE    = 12; // D6
+// ---------- L298N Half-H bridge pin mapping (adjust for your wiring) ----------
+// Left motor (ENA, IN1, IN2)
+constexpr uint8_t LEFT_IN1 = 4;   // D2 on NodeMCU
+constexpr uint8_t LEFT_IN2 = 5;   // D1 on NodeMCU
+constexpr uint8_t LEFT_PWM = 13;  // D7 on NodeMCU (ENA) -> HIGH = run
 
-// ESP32 pins
-// constexpr uint8_t kSER   = 21;
-// constexpr uint8_t kCLK   = 19;
-// constexpr uint8_t kLATCH = 23;
-// constexpr uint8_t kOE    = 18;
-// ---------- Bit mapping (adjust if needed) ----------
-constexpr uint8_t L_IN1 = 0b00000001; // left motor IN1
-constexpr uint8_t L_IN2 = 0b00000010; // left motor IN2
-constexpr uint8_t R_IN1 = 0b00000100; // right motor IN1
-constexpr uint8_t R_IN2 = 0b00001000; // right motor IN2
+// Right motor (ENB, IN3, IN4)
+constexpr uint8_t RIGHT_IN1 = 14;  // D5 on NodeMCU
+constexpr uint8_t RIGHT_IN2 = 12;  // D6 on NodeMCU
+constexpr uint8_t RIGHT_PWM = 15;  // D8 on NodeMCU (ENB) -> PWM capable
 
-Tank Tank(kSER, kCLK, kLATCH, kOE, L_IN1, L_IN2, R_IN1, R_IN2);
+Tank Tank(LEFT_IN1, LEFT_IN2, LEFT_PWM, RIGHT_IN1, RIGHT_IN2, RIGHT_PWM);
 
 // Simple ANSI arrow-key parser
-int escStage = 0; // 0=normal, 1=ESC, 2='['
+int escStage = 0;  // 0=normal, 1=ESC, 2='['
 
 void handleKey(int c) {
   if (escStage == 0) {
-    if (c == 0x1B) { escStage = 1; return; }  // ESC
-    if (c == ' ')  { Tank.stop(); Serial.println("STOP"); return; }
+    if (c == 0x1B) {
+      escStage = 1;
+      return;
+    }  // ESC
+    if (c == ' ') {
+      Tank.stop();
+      Serial.println("STOP");
+      return;
+    }
     // WASD fallback
-    if (c == 'w' || c == 'W') { Tank.forward();  Serial.println("FORWARD"); }
-    if (c == 's' || c == 'S') { Tank.backward(); Serial.println("BACKWARD"); }
-    if (c == 'a' || c == 'A') { Tank.left();     Serial.println("LEFT"); }
-    if (c == 'd' || c == 'D') { Tank.right();    Serial.println("RIGHT"); }
+    if (c == 'w' || c == 'W') {
+      Tank.forward();
+      Serial.println("FORWARD");
+    }
+    if (c == 's' || c == 'S') {
+      Tank.backward();
+      Serial.println("BACKWARD");
+    }
+    if (c == 'a' || c == 'A') {
+      Tank.left();
+      Serial.println("LEFT");
+    }
+    if (c == 'd' || c == 'D') {
+      Tank.right();
+      Serial.println("RIGHT");
+    }
     return;
   }
   if (escStage == 1) {
@@ -41,10 +53,22 @@ void handleKey(int c) {
   }
   if (escStage == 2) {
     switch (c) {
-      case 'A': Tank.forward();  Serial.println("FORWARD");  break; // Up
-      case 'B': Tank.backward(); Serial.println("BACKWARD"); break; // Down
-      case 'C': Tank.right();    Serial.println("RIGHT");    break; // Right
-      case 'D': Tank.left();     Serial.println("LEFT");     break; // Left
+      case 'A':
+        Tank.forward();
+        Serial.println("FORWARD");
+        break;  // Up
+      case 'B':
+        Tank.backward();
+        Serial.println("BACKWARD");
+        break;  // Down
+      case 'C':
+        Tank.right();
+        Serial.println("RIGHT");
+        break;  // Right
+      case 'D':
+        Tank.left();
+        Serial.println("LEFT");
+        break;  // Left
       default: break;
     }
     escStage = 0;
@@ -54,11 +78,12 @@ void handleKey(int c) {
 void setup() {
   Serial.begin(115200);
   while (!Serial) {}
-  Serial.println("\nESP32 + L293D Shield (74HC595) - Tank Test");
+  Serial.println("\nESP32/ESP8266 + L298N Half-H Bridge - Tank Test");
   Serial.println("Arrow keys = move, Space = stop, WASD also works.");
-  Serial.println("OE is active-LOW; keeping it LOW enables outputs.");
+  Serial.println("PWM ramp enables smooth transitions between states.");
 
   Tank.begin();
+  Tank.setRamp(10, 10);  // step size, interval ms
   Tank.forward();
   Serial.println("Starting forward...");
 }
@@ -67,4 +92,6 @@ void loop() {
   while (Serial.available()) {
     handleKey(Serial.read());
   }
+  Tank.update();
+  delay(5);  // keep the ramp timing predictable
 }
