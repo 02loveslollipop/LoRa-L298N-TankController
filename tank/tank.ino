@@ -20,8 +20,9 @@
 #endif
 
 // ---------- L298N Half-H bridge pin mapping for LilyGO T-Beam ----------
-constexpr uint8_t LEFT_IN1  = 33;
-constexpr uint8_t LEFT_IN2  = 32;
+// Avoid LoRa DIO lines (GPIO32/33) which are wired to the SX1276 module.
+constexpr uint8_t LEFT_IN1  = 22;
+constexpr uint8_t LEFT_IN2  = 21;
 constexpr uint8_t LEFT_PWM  = 25;  // DAC/PWM capable (ENA)
 constexpr uint8_t RIGHT_IN1 = 15;
 constexpr uint8_t RIGHT_IN2 = 13;

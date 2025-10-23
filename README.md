@@ -35,12 +35,12 @@ Example wiring for a NodeMCU-style ESP8266 (adjust to match your board):
 
 | Signal | L298N Pin | ESP8266 Pin | GPIO | Notes |
 | ------ | --------- | ----------- | ---- | ----- |
-| ENA    | ENA       | D7          | 13   | Tie HIGH for full speed or PWM this pin |
-| IN1    | IN1       | D2          | 4    | Left motor direction A |
-| IN2    | IN2       | D1          | 5    | Left motor direction B |
-| ENB    | ENB       | D8          | 15   | PWM capable; ensure the board keeps GPIO15 LOW at boot |
-| IN3    | IN3       | D5          | 14   | Right motor direction A |
-| IN4    | IN4       | D6          | 12   | Right motor direction B |
+| ENA    | ENA       | D7          | 25   | Tie HIGH for full speed or PWM this pin |
+| IN1    | IN1       | D2          | 22   | Left motor direction A |
+| IN2    | IN2       | D1          | 21   | Left motor direction B |
+| ENB    | ENB       | D8          | 14   | PWM capable; ensure the board keeps GPIO15 LOW at boot |
+| IN3    | IN3       | D5          | 13   | Right motor direction A |
+| IN4    | IN4       | D6          | 15   | Right motor direction B |
 
 Power the logic side with 5 V, feed the motor supply (7–12 V typical) to `VCC`/`VIN`, and keep grounds common between the driver and the MCU.
 
