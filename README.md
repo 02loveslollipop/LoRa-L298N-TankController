@@ -33,8 +33,8 @@ The helper class toggles those pins directly and drives the enable lines with PW
 
 Example wiring for a NodeMCU-style ESP8266 (adjust to match your board):
 
-| Signal | L298N Pin | ESP8266 Pin | GPIO | Notes |
-| ------ | --------- | ----------- | ---- | ----- |
+| Signal | L298N Pin | ESP8266 Pin | LilyGO | Notes |
+| ------ | --------- | ----------- | ----- | ----- |
 | ENA    | ENA       | D7          | 25   | Tie HIGH for full speed or PWM this pin |
 | IN1    | IN1       | D2          | 22   | Left motor direction A |
 | IN2    | IN2       | D1          | 21   | Left motor direction B |
