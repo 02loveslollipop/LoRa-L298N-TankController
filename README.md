@@ -1,54 +1,114 @@
-## 📌 Introduction
+## Introduction
 
-This project ships with a lightweight Arduino C++ helper (`TankShift`) that drives a dual **L298N** module in half-H configuration. Each motor is controlled with two direction inputs and a single enable pin (ENA / ENB). The library wraps those lines behind a tank-style API, adds PWM speed control, and ramps between states for smooth transitions on an **ESP8266** or **ESP32**.
+This project ships with a lightweight Arduino C++ helper (`TankShift`) that drives a dual **L298N** H-bridge. Each motor is controlled with two direction inputs and a single enable pin (ENA / ENB). The library wraps those lines behind a tank-style API, adds PWM speed control, and ramps between states for smooth transitions on **ESP8266** and **ESP32** platforms.
 
-The example sketch (`tank.ino`) listens to serial input (WASD or arrow keys) and translates the commands into forward, reverse, spin-left, spin-right, or stop actions.
+The system uses **LoRa wireless communication** for long-range control, with **AES-256-CBC encryption** ensuring secure command transmission between transmitter and receiver. A shared protocol library (`ControlProtocol.h`) standardizes the communication format across all nodes.
+
 
 ---
 
-## ⚙️ Core Components
+## Features
+
+### Secure Communication
+- **AES-256-CBC Encryption**: All LoRa commands are encrypted to prevent unauthorized access
+- **CRC32 Validation**: Ensures data integrity across wireless transmission
+- **Sequence Tracking**: Prevents replay attacks and duplicate command processing
+- **Magic Header & Version Control**: Validates protocol compatibility
+
+### LoRa Wireless Control
+- **Long-Range Operation**: Control your tank from hundreds of meters away
+- **Low Latency**: Fast command execution for responsive control
+
+### 🔧 Shared Protocol Library
+The `ControlProtocol.h` header provides a standardized communication framework:
+- **Platform-Independent**: Works across ESP8266, ESP32, and probably other Arduino-compatible boards
+- **Compact Frame Format**: 16-byte encrypted packets minimize bandwidth
+- **Command Set**: Stop, Forward, Backward, Left, Right, SetSpeed
+- **Easy Integration**: Include once, use everywhere
+
+---
+
+## Core Components
 
 ### L298N Dual H-Bridge
-The **L298N** exposes two identical half-H bridges. Each side needs:
+
+![L298N Pinout](https://arduinoyard.com/wp-content/uploads/2025/02/l298n_motordriver_pinout_bb.png)
+
+The **L298N** exposes two identical H bridges. Each side needs:
 
 - `INx1` / `INx2` to choose direction
-- `ENx` to gate power (HIGH = run, LOW = stop)
+- `ENx` to gate power (HIGH = run, LOW = stop) (can be PWM modulated for speed control)
 
 The helper class toggles those pins directly and drives the enable lines with PWM, ramping between targets so direction changes feel smooth.
 
----
-
-## Usage & Code Logic
-
-- Call `Tank.begin()` once to set the pin modes and stop both motors.
-- Use `.forward()`, `.backward()`, `.left()`, `.right()`, or `.stop()` to command the chassis.
-- `setSpeed(left, right)` defines the PWM ceiling (0–255) for each side.
-- `setRamp(step, intervalMs)` tunes how aggressively the PWM ramps between targets. Smaller steps or larger intervals yield gentler transitions.
-- `Tank.update()` must be called regularly (e.g. each `loop()` pass) so the ramp logic can advance.
-- The sketch exposes both serial controls and a lightweight Wi-Fi web UI; connect to the board's access point to steer it from a browser.
+### LoRa Transceiver Module
+Supports common LoRa modules (SX1276/SX1278-based):
+- **Frequency**: 433 MHz, 868 MHz, or 915 MHz depending on region
+- **Spread Factor**: Configurable for range vs. speed tradeoff
+- **Bandwidth**: Adjustable based on interference environment
+- **Output Power**: Configurable transmission power
 
 ---
 
-## 🔌 Pinout & Connections
+### Encryption Details
+- **Algorithm**: AES-256 in CBC mode
+- **Key Size**: 256-bit (32 bytes)
+- **IV Size**: 128-bit (16 bytes)
+- **Block Size**: 16 bytes (matches frame size)
 
-Example wiring for a NodeMCU-style ESP8266 (adjust to match your board):
+---
 
-| Signal | L298N Pin | ESP8266 Pin | LilyGO | Notes |
-| ------ | --------- | ----------- | ----- | ----- |
-| ENA    | ENA       | D7          | 25   | Tie HIGH for full speed or PWM this pin |
-| IN1    | IN1       | D2          | 22   | Left motor direction A |
-| IN2    | IN2       | D1          | 21   | Left motor direction B |
-| ENB    | ENB       | D8          | 14   | PWM capable; ensure the board keeps GPIO15 LOW at boot |
-| IN3    | IN3       | D5          | 13   | Right motor direction A |
-| IN4    | IN4       | D6          | 15   | Right motor direction B |
+## Pinout & Connections
+
+### Motor Controller (Receiver)
+
+| Signal                      | L298N Pin | ESP8266 Pin | ESP32 (LilyGO) Pin |
+|-----------------------------|-----------|-------------|--------------------|
+| Motor A PWM                 | ENA       | D7          | 25                 |
+| Motor A Direction control 1 | IN1       | D2          | 22                 |
+| Motor A Direction control 2 | IN2       | D1          | 21                 |
+| Motor B PWM                 | ENB       | D8          | 14                 |
+| Motor B Direction control 1 | IN3       | D5          | 13                 |
+| Motor B Direction control 2 | IN4       | D6          | 15                 |
+
+### LoRa Module Connections
+
+| LoRa Pin | ESP8266 Pin | ESP32 Pin | Description    |
+|----------|-------------|-----------|----------------|
+| SCK      | D5 (GPIO14) | GPIO18    | SPI Clock      |
+| MISO     | D6 (GPIO12) | GPIO19    | SPI Data In    |
+| MOSI     | D7 (GPIO13) | GPIO23    | SPI Data Out   |
+| NSS/CS   | D8 (GPIO15) | GPIO5     | Chip Select    |
+| RST      | D0 (GPIO16) | GPIO14    | Reset          |
+| DIO0     | D1 (GPIO5)  | GPIO26    | Interrupt Pin  |
 
 Power the logic side with 5 V, feed the motor supply (7–12 V typical) to `VCC`/`VIN`, and keep grounds common between the driver and the MCU.
 
-On boot the firmware creates a SoftAP named `TankController` (password `tank12345`). Once connected, browse to `http://192.168.4.1` to access the on-board controller page.
+---
+
+## Network Setup
+
+On boot the receiver firmware creates a SoftAP named `TankController` (password `tank12345`). Once connected, browse to `http://192.168.4.1` to access the on-board controller page with both manual controls and LoRa status indicators.
+
+The transmitter can operate standalone with physical controls or provide its own web interface for command input. The receiver also exposes a REST ENDPOINT at `/cmd` where to remotely control the device.
 
 ---
 
-## ✅ Summary
+## Dependencies
 
-You now have a browser- and serial-controllable half-H bridge driver tailored to the ubiquitous L298N board. The `TankShift` class keeps the API focused on movement semantics while smoothing transitions with PWM ramps. Customize the pin mapping and ramp settings to suit your chassis.
+- **Arduino LoRa library** by Sandeep Mistry
+- **mbedTLS** (included with ESP8266/ESP32 cores)
+- **ESP8266WiFi** or **WiFi** (ESP32) for web interface
+- **TankShift** motor control library (included)
 
+---
+
+## Getting Started
+
+1. Install required libraries via Arduino Library Manager
+2. Update encryption keys in `common/ControlProtocol.h`
+3. Configure LoRa frequency and parameters for your region
+4. Flash receiver sketch to tank controller
+5. Flash transmitter sketch to remote control
+6. Power up both devices and test range
+7. Fine-tune motor ramping and speed limits as needed
