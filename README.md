@@ -36,7 +36,7 @@ The `ControlProtocol.h` header provides a standardized communication framework:
 
 The **L298N** exposes two identical H bridges. Each side needs:
 
-- `INx1` / `INx2` to choose direction
+- `IN1` / `IN2` / `IN3` / `IN4`  to choose direction
 - `ENx` to gate power (HIGH = run, LOW = stop) (can be PWM modulated for speed control)
 
 The helper class toggles those pins directly and drives the enable lines with PWM, ramping between targets so direction changes feel smooth.
