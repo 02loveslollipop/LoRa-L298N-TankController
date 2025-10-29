@@ -169,7 +169,13 @@ async def status_listener() -> None:
 
 @app.on_event("startup")
 async def on_startup() -> None:
-    app.state.redis = redis.from_url(REDIS_URL, decode_responses=True)
+    # For AWS ElastiCache/Valkey with TLS, disable certificate verification
+    connection_kwargs = {"decode_responses": True}
+    if REDIS_URL.startswith("rediss://"):
+        connection_kwargs["ssl_cert_reqs"] = None
+        connection_kwargs["ssl_check_hostname"] = False
+    
+    app.state.redis = redis.from_url(REDIS_URL, **connection_kwargs)
     app.state.status_task = asyncio.create_task(status_listener())
 
 
