@@ -5,8 +5,8 @@ import json
 from typing import Dict, List, Optional
 from fastapi import WebSocket
 
-from ..models import TankInfo
-from ..core import utcnow
+from models import TankInfo
+from core import utcnow
 
 
 class ConnectionManager:

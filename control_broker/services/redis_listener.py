@@ -4,8 +4,8 @@ import asyncio
 from pydantic import ValidationError
 import redis.asyncio as redis
 
-from ..models import StreamCommand
-from ..core import Config
+from models import StreamCommand
+from core import Config
 from .connection_manager import ConnectionManager
 
 

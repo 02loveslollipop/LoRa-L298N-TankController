@@ -31,10 +31,13 @@ manager = ConnectionManager()
 @app.on_event("startup")
 async def on_startup() -> None:
     """Initialize Redis connection and start command listener."""
-    app.state.redis = redis.from_url(
-        config.redis_url,
-        decode_responses=True,
-    )
+    # For AWS ElastiCache/Valkey with TLS, disable certificate verification
+    connection_kwargs = {"decode_responses": True}
+    if config.redis_url.startswith("rediss://"):
+        connection_kwargs["ssl_cert_reqs"] = None
+        connection_kwargs["ssl_check_hostname"] = False
+    
+    app.state.redis = redis.from_url(config.redis_url, **connection_kwargs)
     
     # Start Redis command stream listener
     listener = RedisCommandListener(app.state.redis, config, manager)
