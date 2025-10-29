@@ -7,7 +7,10 @@ from datetime import datetime, timezone
 from typing import Dict, Optional, Set
 
 import redis.asyncio as redis
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from redis import exceptions as redis_exceptions
+from redis.backoff import ExponentialBackoff
+from redis.asyncio.retry import Retry
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, validator
@@ -64,6 +67,53 @@ app.add_middleware(
 subscribers: Dict[str, Set[WebSocket]] = defaultdict(set)
 latest_status: Dict[str, dict] = {}
 subscriber_lock = asyncio.Lock()
+redis_client_lock = asyncio.Lock()
+
+
+def _build_connection_kwargs() -> dict:
+    kwargs = {
+        "decode_responses": True,
+        "retry": Retry(
+            ExponentialBackoff(cap=1),
+            retries=5,
+            supported_errors=(redis_exceptions.ConnectionError,),
+        ),
+        "health_check_interval": 30,
+        "socket_keepalive": True,
+        "retry_on_timeout": True,
+    }
+    if REDIS_URL.startswith("rediss://"):
+        kwargs["ssl_cert_reqs"] = None
+        kwargs["ssl_check_hostname"] = False
+    return kwargs
+
+
+async def _create_redis_client() -> redis.Redis:
+    client = redis.from_url(REDIS_URL, **_build_connection_kwargs())
+    try:
+        await client.ping()
+    except Exception:
+        await client.close()
+        raise
+    return client
+
+
+async def reset_redis_client() -> redis.Redis:
+    async with redis_client_lock:
+        existing = getattr(app.state, "redis", None)
+        if existing is not None:
+            app.state.redis = None
+            await existing.close()
+        new_client = await _create_redis_client()
+        app.state.redis = new_client
+        return new_client
+
+
+async def get_redis_client() -> redis.Redis:
+    client = getattr(app.state, "redis", None)
+    if client is None:
+        return await reset_redis_client()
+    return client
 
 
 async def register_subscriber(tank_id: str, websocket: WebSocket) -> None:
@@ -106,20 +156,33 @@ async def safe_send(websocket: WebSocket, message: dict) -> None:
 
 
 async def append_command(tank_id: str, payload: CommandPayload) -> None:
-    redis_client: redis.Redis = app.state.redis
     data = payload.dict(exclude_none=True)
     data["tankId"] = tank_id
     data.setdefault("timestamp", utcnow().isoformat())
-    await redis_client.xadd(
-        REDIS_COMMAND_STREAM,
-        data,
-        maxlen=REDIS_COMMAND_MAXLEN,
-        approximate=True,
-    )
+    last_error: Optional[redis_exceptions.RedisError] = None
+    for attempt in range(2):
+        redis_client = await get_redis_client()
+        try:
+            await redis_client.xadd(
+                REDIS_COMMAND_STREAM,
+                data,
+                maxlen=REDIS_COMMAND_MAXLEN,
+                approximate=True,
+            )
+            return
+        except redis_exceptions.ConnectionError as exc:
+            last_error = exc
+            print(f"[VISUAL] Redis connection lost while enqueuing {tank_id}: {exc}")
+            await reset_redis_client()
+        except redis_exceptions.RedisError as exc:
+            last_error = exc
+            print(f"[VISUAL] Failed to enqueue command for {tank_id}: {exc}")
+            break
+    if last_error:
+        raise last_error
 
 
 async def status_listener() -> None:
-    redis_client: redis.Redis = app.state.redis
     last_id = REDIS_STATUS_START
     print(
         f"[VISUAL] Status listener watching stream '{REDIS_STATUS_STREAM}' starting at '{last_id}'"
@@ -127,6 +190,7 @@ async def status_listener() -> None:
 
     while True:
         try:
+            redis_client = await get_redis_client()
             results = await redis_client.xread(
                 streams={REDIS_STATUS_STREAM: last_id},
                 count=50,
@@ -162,6 +226,10 @@ async def status_listener() -> None:
         except asyncio.CancelledError:
             print("[VISUAL] Status listener cancelled")
             break
+        except redis_exceptions.ConnectionError as exc:
+            print(f"[VISUAL] Status listener redis connection lost: {exc}")
+            await reset_redis_client()
+            await asyncio.sleep(0.5)
         except Exception as exc:
             print(f"[VISUAL] Status listener error: {exc}")
             await asyncio.sleep(1.0)
@@ -169,13 +237,7 @@ async def status_listener() -> None:
 
 @app.on_event("startup")
 async def on_startup() -> None:
-    # For AWS ElastiCache/Valkey with TLS, disable certificate verification
-    connection_kwargs = {"decode_responses": True}
-    if REDIS_URL.startswith("rediss://"):
-        connection_kwargs["ssl_cert_reqs"] = None
-        connection_kwargs["ssl_check_hostname"] = False
-    
-    app.state.redis = redis.from_url(REDIS_URL, **connection_kwargs)
+    await reset_redis_client()
     app.state.status_task = asyncio.create_task(status_listener())
 
 
@@ -189,6 +251,7 @@ async def on_shutdown() -> None:
     redis_client = getattr(app.state, "redis", None)
     if redis_client:
         await redis_client.close()
+    app.state.redis = None
 
 
 # API endpoints -------------------------------------------------------
@@ -204,7 +267,10 @@ async def list_tanks() -> Dict[str, dict]:
 
 @app.post("/command/{tank_id}")
 async def enqueue_command(tank_id: str, payload: CommandPayload) -> dict:
-    await append_command(tank_id, payload)
+    try:
+        await append_command(tank_id, payload)
+    except redis_exceptions.RedisError as exc:
+        raise HTTPException(status_code=503, detail="Redis unavailable") from exc
     return {"status": "queued", "tankId": tank_id, "command": payload.dict(exclude_none=True)}
 
 
@@ -226,7 +292,7 @@ CONTROLLER_TEMPLATE = """
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Tank Controller – {{tank_id}}</title>
+  <title>Tank Controller - {{tank_id}}</title>
   <style>
     body { font-family: sans-serif; background: #10131a; color: #f4f6fb; margin: 0; padding: 2rem; }
     h1 { margin-bottom: 0.5rem; }
@@ -239,8 +305,8 @@ CONTROLLER_TEMPLATE = """
   </style>
 </head>
 <body>
-  <h1>Tank Controller – {{tank_id}}</h1>
-  <p>Status: <span id="status">Connecting…</span></p>
+  <h1>Tank Controller - {{tank_id}}</h1>
+  <p>Status: <span id="status">Connecting...</span></p>
   <div class="grid">
     <button data-command="forward">Forward</button>
     <button data-command="stop">Stop</button>
@@ -338,3 +404,4 @@ CONTROLLER_TEMPLATE = """
 async def controller_ui(tank_id: str) -> HTMLResponse:
     html = CONTROLLER_TEMPLATE.replace("{{tank_id}}", tank_id)
     return HTMLResponse(content=html)
+
