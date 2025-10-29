@@ -1,0 +1,291 @@
+import asyncio
+import json
+import os
+from contextlib import suppress
+from dataclasses import dataclass
+from datetime import datetime, timezone
+from typing import Dict, List, Optional
+
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel, ValidationError, validator
+import redis.asyncio as redis
+
+
+def utcnow() -> datetime:
+    return datetime.now(timezone.utc)
+
+
+class CommandPayload(BaseModel):
+    command: str
+    leftSpeed: Optional[int] = None
+    rightSpeed: Optional[int] = None
+    sequence: Optional[int] = None
+    timestamp: Optional[str] = None
+
+    @validator("command")
+    def validate_command(cls, value: str) -> str:
+        allowed = {"forward", "backward", "left", "right", "stop", "setspeed"}
+        value_lower = value.lower()
+        if value_lower not in allowed:
+            raise ValueError(f"Unsupported command '{value}'.")
+        return value_lower
+
+    @validator("leftSpeed", "rightSpeed")
+    def validate_speed(cls, value: Optional[int]) -> Optional[int]:
+        if value is None:
+            return value
+        if not 0 <= value <= 255:
+            raise ValueError("Speed must be between 0 and 255.")
+        return value
+
+
+class StreamCommand(CommandPayload):
+    tankId: str
+
+    @validator("tankId")
+    def validate_tank(cls, value: str) -> str:
+        value = value.strip()
+        if not value:
+            raise ValueError("tankId is required")
+        return value
+
+
+REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+REDIS_COMMAND_STREAM = os.getenv("REDIS_COMMAND_STREAM", "tank_commands")
+REDIS_COMMAND_STREAM_START = os.getenv("REDIS_COMMAND_STREAM_START", "0-0")
+REDIS_STATUS_STREAM = os.getenv("REDIS_STATUS_STREAM", "tank_status")
+REDIS_STATUS_MAXLEN = int(os.getenv("REDIS_STATUS_MAXLEN", "500"))
+
+
+@dataclass
+class TankInfo:
+    tank_id: str
+    connected_at: datetime
+    last_seen: datetime
+    last_payload: Optional[dict] = None
+    commands_sent: int = 0
+    websocket: Optional[WebSocket] = None
+
+
+class ConnectionManager:
+    def __init__(self) -> None:
+        self._tanks: Dict[str, TankInfo] = {}
+        self._lock = asyncio.Lock()
+
+    async def register_tank(self, tank_id: str, websocket: WebSocket) -> TankInfo:
+        await websocket.accept()
+        await websocket.send_text(
+            json.dumps(
+                {"type": "hello", "tankId": tank_id, "acceptedAt": utcnow().isoformat()}
+            )
+        )
+        async with self._lock:
+            previous = self._tanks.get(tank_id)
+            if previous and previous.websocket:
+                await previous.websocket.close(code=1011)
+            info = TankInfo(
+                tank_id=tank_id,
+                connected_at=utcnow(),
+                last_seen=utcnow(),
+                last_payload=previous.last_payload if previous else None,
+                commands_sent=previous.commands_sent if previous else 0,
+                websocket=websocket,
+            )
+            self._tanks[tank_id] = info
+            return info
+
+    async def unregister_tank(self, tank_id: str) -> None:
+        async with self._lock:
+            info = self._tanks.get(tank_id)
+            if not info:
+                return
+            info.websocket = None
+            info.last_seen = utcnow()
+
+    async def forward_to_tank(self, tank_id: str, payload: dict) -> None:
+        async with self._lock:
+            info = self._tanks.get(tank_id)
+            if not info or not info.websocket:
+                raise LookupError("Tank is not connected.")
+            info.commands_sent += 1
+            websocket = info.websocket
+        await websocket.send_text(json.dumps(payload))
+
+    def snapshot(self) -> List[dict]:
+        now = utcnow()
+        result: List[dict] = []
+        for info in self._tanks.values():
+            result.append(
+                {
+                    "tankId": info.tank_id,
+                    "connected": info.websocket is not None,
+                    "connectedAt": info.connected_at.isoformat(),
+                    "lastSeen": info.last_seen.isoformat(),
+                    "commandsSent": info.commands_sent,
+                    "lastPayload": info.last_payload,
+                    "stale": (now - info.last_seen).total_seconds(),
+                }
+            )
+        return result
+
+    async def update_last_seen(self, tank_id: str, payload: Optional[dict]) -> None:
+        async with self._lock:
+            info = self._tanks.get(tank_id)
+            if not info:
+                return
+            info.last_seen = utcnow()
+            if payload is not None:
+                info.last_payload = payload
+
+
+app = FastAPI(title="Tank Control Service", version="0.1.0")
+manager = ConnectionManager()
+
+
+async def command_stream_listener() -> None:
+    redis_client: redis.Redis = app.state.redis
+    stream = REDIS_COMMAND_STREAM
+    last_id = REDIS_COMMAND_STREAM_START
+    print(f"[REDIS] Command listener started on stream '{stream}' from '{last_id}'")
+
+    while True:
+        try:
+            results = await redis_client.xread(
+                streams={stream: last_id},
+                count=20,
+                block=5000,
+            )
+            if not results:
+                continue
+
+            for _, messages in results:
+                for message_id, data in messages:
+                    last_id = message_id
+                    try:
+                        payload = StreamCommand(**data)
+                    except ValidationError as exc:
+                        print(f"[WARN] Invalid stream payload {data}: {exc}")
+                        continue
+
+                    payload_dict = payload.dict(exclude_none=True)
+                    tank_id = payload_dict.pop("tankId")
+
+                    delivered = False
+                    try:
+                        await manager.forward_to_tank(tank_id, payload_dict)
+                        print(f"[REDIS] Dispatched command to {tank_id}: {payload_dict}")
+                        delivered = True
+                    except LookupError as exc:
+                        print(f"[WARN] Tank {tank_id} unavailable: {exc}")
+                    except Exception as send_error:
+                        print(f"[ERROR] Failed to send command to {tank_id}: {send_error}")
+
+                    if delivered:
+                        try:
+                            await redis_client.xdel(stream, message_id)
+                        except Exception as delete_error:
+                            print(f"[WARN] Unable to delete stream entry {message_id}: {delete_error}")
+
+        except asyncio.CancelledError:
+            print("[REDIS] Command listener cancelled")
+            break
+        except Exception as exc:
+            print(f"[ERROR] Command listener error: {exc}")
+            await asyncio.sleep(1.0)
+
+
+@app.on_event("startup")
+async def on_startup() -> None:
+    app.state.redis = redis.from_url(
+        REDIS_URL,
+        decode_responses=True,
+    )
+    app.state.command_listener = asyncio.create_task(command_stream_listener())
+
+
+@app.on_event("shutdown")
+async def on_shutdown() -> None:
+    listener = getattr(app.state, "command_listener", None)
+    if listener:
+        listener.cancel()
+        with suppress(asyncio.CancelledError):
+            await listener
+    redis_client = getattr(app.state, "redis", None)
+    if redis_client:
+        await redis_client.close()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+@app.get("/health")
+async def health() -> dict:
+    return {"status": "ok", "timestamp": utcnow().isoformat(), "version": "2.0.0"}
+
+
+@app.get("/tanks")
+async def list_tanks() -> List[dict]:
+    return manager.snapshot()
+
+
+@app.websocket("/ws/tank/{tank_id}")
+async def tank_channel(websocket: WebSocket, tank_id: str) -> None:
+    redis_client: Optional[redis.Redis] = getattr(app.state, "redis", None)
+    try:
+        await manager.register_tank(tank_id, websocket)
+        print(f"[DEBUG] Tank {tank_id} registered successfully")
+
+        while True:
+            try:
+                message = await asyncio.wait_for(websocket.receive_text(), timeout=30.0)
+                print(f"[DEBUG] Received from {tank_id}: {message[:100]}")
+            except asyncio.TimeoutError:
+                print(f"[DEBUG] Timeout waiting for message from {tank_id}, sending keepalive")
+                await websocket.send_json({"type": "ping", "timestamp": utcnow().isoformat()})
+                continue
+            except WebSocketDisconnect as disconnect:
+                print(f"[DEBUG] Tank {tank_id} disconnect signal: code={disconnect.code}")
+                raise
+            except Exception as recv_error:
+                print(f"[ERROR] Receive error for {tank_id}: {recv_error}")
+                raise
+                
+            try:
+                payload = json.loads(message)
+            except json.JSONDecodeError:
+                payload = {"type": "telemetry", "raw": message}
+            if isinstance(payload, dict):
+                payload.setdefault("type", "telemetry")
+            await manager.update_last_seen(tank_id, payload if isinstance(payload, dict) else None)
+
+            if redis_client and isinstance(payload, dict):
+                try:
+                    await redis_client.xadd(
+                        REDIS_STATUS_STREAM,
+                        {
+                            "tankId": tank_id,
+                            "payload": json.dumps(payload),
+                            "receivedAt": utcnow().isoformat(),
+                        },
+                        maxlen=REDIS_STATUS_MAXLEN,
+                        approximate=True,
+                    )
+                except Exception as stream_error:
+                    print(f"[WARN] Failed to append telemetry to Redis stream: {stream_error}")
+    except WebSocketDisconnect:
+        print(f"[DEBUG] Tank {tank_id} disconnected normally")
+        await manager.unregister_tank(tank_id)
+    except Exception as e:
+        print(f"[ERROR] Tank {tank_id} error: {type(e).__name__}: {e}")
+        import traceback
+        traceback.print_exc()
+        await manager.unregister_tank(tank_id)
+
+
+# WSGI compatibility for platforms expecting `application`
+application = app
