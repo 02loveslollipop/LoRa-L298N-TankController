@@ -1,9 +1,10 @@
 $hash = -join ((48..57) + (97..102) | Get-Random -Count 6 | ForEach-Object {[char]$_})
-Remove-Item deploy-*.zip -ErrorAction SilentlyContinue
+Remove-Item control-broker-*.zip, visual-controller-*.zip, stream-cleaner-*.zip -ErrorAction SilentlyContinue
 
 $services = @(
     @{ Name = 'control_broker'; Path = 'control_broker'; Output = "control-broker-$hash.zip" },
-    @{ Name = 'visual_controller'; Path = 'visual_controller'; Output = "visual-controller-$hash.zip" }
+    @{ Name = 'visual_controller'; Path = 'visual_controller'; Output = "visual-controller-$hash.zip" },
+    @{ Name = 'stream_cleaner'; Path = 'stream_cleaner'; Output = "stream-cleaner-$hash.zip" }
 )
 
 $pythonScript = @"

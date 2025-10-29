@@ -1,8 +1,11 @@
 """Redis stream listener for commands."""
 
 import asyncio
+from typing import Awaitable, Callable
+
 from pydantic import ValidationError
 import redis.asyncio as redis
+from redis import exceptions as redis_exceptions
 
 from models import StreamCommand
 from core import Config
@@ -11,9 +14,16 @@ from .connection_manager import ConnectionManager
 
 class RedisCommandListener:
     """Listens to Redis command stream and forwards to tanks."""
-    
-    def __init__(self, redis_client: redis.Redis, config: Config, manager: ConnectionManager):
-        self.redis_client = redis_client
+
+    def __init__(
+        self,
+        get_client: Callable[[], Awaitable[redis.Redis]],
+        reset_client: Callable[[], Awaitable[redis.Redis]],
+        config: Config,
+        manager: ConnectionManager,
+    ):
+        self._get_client = get_client
+        self._reset_client = reset_client
         self.config = config
         self.manager = manager
 
@@ -25,7 +35,8 @@ class RedisCommandListener:
 
         while True:
             try:
-                results = await self.redis_client.xread(
+                redis_client = await self._get_client()
+                results = await redis_client.xread(
                     streams={stream: last_id},
                     count=20,
                     block=5000,
@@ -36,16 +47,26 @@ class RedisCommandListener:
                 for _, messages in results:
                     for message_id, data in messages:
                         last_id = message_id
-                        await self._process_message(message_id, data, stream)
+                        await self._process_message(redis_client, message_id, data, stream)
 
             except asyncio.CancelledError:
                 print("[REDIS] Command listener cancelled")
                 break
+            except redis_exceptions.ConnectionError as exc:
+                print(f"[WARN] Command listener Redis connection lost: {exc}")
+                await self._reset_client()
+                await asyncio.sleep(0.5)
             except Exception as exc:
                 print(f"[ERROR] Command listener error: {exc}")
                 await asyncio.sleep(1.0)
 
-    async def _process_message(self, message_id: str, data: dict, stream: str) -> None:
+    async def _process_message(
+        self,
+        redis_client: redis.Redis,
+        message_id: str,
+        data: dict,
+        stream: str,
+    ) -> None:
         """Process a single message from the stream."""
         try:
             payload = StreamCommand(**data)
@@ -68,6 +89,6 @@ class RedisCommandListener:
 
         if delivered:
             try:
-                await self.redis_client.xdel(stream, message_id)
-            except Exception as delete_error:
+                await redis_client.xdel(stream, message_id)
+            except redis_exceptions.RedisError as delete_error:
                 print(f"[WARN] Unable to delete stream entry {message_id}: {delete_error}")

@@ -3,11 +3,15 @@
 import asyncio
 import json
 from contextlib import suppress
-from typing import List, Optional
+from datetime import timedelta
+from typing import List
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 import redis.asyncio as redis
+from redis import exceptions as redis_exceptions
+from redis.backoff import ExponentialBackoff
+from redis.asyncio.retry import Retry
 
 from core import get_config, utcnow
 from models import TankInfo
@@ -22,6 +26,57 @@ config = get_config()
 
 # Initialize connection manager
 manager = ConnectionManager()
+redis_client_lock = asyncio.Lock()
+
+
+def _build_connection_kwargs() -> dict:
+    """Construct Redis connection keyword arguments."""
+    kwargs = {
+        "decode_responses": True,
+        "retry": Retry(
+            ExponentialBackoff(cap=1),
+            retries=5,
+            supported_errors=(redis_exceptions.ConnectionError,),
+        ),
+        "health_check_interval": 30,
+        "socket_keepalive": True,
+        "retry_on_timeout": True,
+    }
+    if config.redis_url.startswith("rediss://"):
+        kwargs["ssl_cert_reqs"] = None
+        kwargs["ssl_check_hostname"] = False
+    return kwargs
+
+
+async def _create_redis_client() -> redis.Redis:
+    """Create and validate a Redis client."""
+    client = redis.from_url(config.redis_url, **_build_connection_kwargs())
+    try:
+        await client.ping()
+    except Exception:
+        await client.close()
+        raise
+    return client
+
+
+async def reset_redis_client() -> redis.Redis:
+    """Reset the shared Redis client instance."""
+    async with redis_client_lock:
+        existing = getattr(app.state, "redis", None)
+        if existing is not None:
+            app.state.redis = None
+            await existing.close()
+        new_client = await _create_redis_client()
+        app.state.redis = new_client
+        return new_client
+
+
+async def get_redis_client() -> redis.Redis:
+    """Get the current Redis client, lazily creating one if needed."""
+    client = getattr(app.state, "redis", None)
+    if client is None:
+        return await reset_redis_client()
+    return client
 
 
 # ========================================
@@ -31,16 +86,10 @@ manager = ConnectionManager()
 @app.on_event("startup")
 async def on_startup() -> None:
     """Initialize Redis connection and start command listener."""
-    # For AWS ElastiCache/Valkey with TLS, disable certificate verification
-    connection_kwargs = {"decode_responses": True}
-    if config.redis_url.startswith("rediss://"):
-        connection_kwargs["ssl_cert_reqs"] = None
-        connection_kwargs["ssl_check_hostname"] = False
-    
-    app.state.redis = redis.from_url(config.redis_url, **connection_kwargs)
-    
+    await reset_redis_client()
+
     # Start Redis command stream listener
-    listener = RedisCommandListener(app.state.redis, config, manager)
+    listener = RedisCommandListener(get_redis_client, reset_redis_client, config, manager)
     app.state.command_listener = asyncio.create_task(listener.start())
 
 
@@ -56,6 +105,7 @@ async def on_shutdown() -> None:
     redis_client = getattr(app.state, "redis", None)
     if redis_client:
         await redis_client.close()
+    app.state.redis = None
 
 
 # ========================================
@@ -97,8 +147,6 @@ async def list_tanks() -> List[dict]:
 @app.websocket("/ws/tank/{tank_id}")
 async def tank_channel(websocket: WebSocket, tank_id: str) -> None:
     """WebSocket endpoint for tank connections."""
-    redis_client: Optional[redis.Redis] = getattr(app.state, "redis", None)
-    
     try:
         await manager.register_tank(tank_id, websocket)
         print(f"[DEBUG] Tank {tank_id} registered successfully")
@@ -142,8 +190,9 @@ async def tank_channel(websocket: WebSocket, tank_id: str) -> None:
             )
 
             # Store telemetry in Redis stream
-            if redis_client and isinstance(payload, dict):
+            if isinstance(payload, dict):
                 try:
+                    redis_client = await get_redis_client()
                     await redis_client.xadd(
                         config.redis_status_stream,
                         {
@@ -154,7 +203,10 @@ async def tank_channel(websocket: WebSocket, tank_id: str) -> None:
                         maxlen=config.redis_status_maxlen,
                         approximate=True,
                     )
-                except Exception as stream_error:
+                except redis_exceptions.ConnectionError as stream_error:
+                    print(f"[WARN] Redis connection lost while storing telemetry for {tank_id}: {stream_error}")
+                    await reset_redis_client()
+                except redis_exceptions.RedisError as stream_error:
                     print(f"[WARN] Failed to append telemetry to Redis: {stream_error}")
                     
     except WebSocketDisconnect:
