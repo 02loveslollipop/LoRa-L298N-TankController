@@ -15,7 +15,7 @@ from redis.asyncio.retry import Retry
 
 from core import get_config, utcnow
 from models import TankInfo
-from services import ConnectionManager, RedisCommandListener
+from services import ConnectionManager, RadarBroker, RedisCommandListener
 
 
 # Initialize FastAPI app
@@ -26,6 +26,7 @@ config = get_config()
 
 # Initialize connection manager
 manager = ConnectionManager()
+radar_broker = RadarBroker()
 redis_client_lock = asyncio.Lock()
 
 
@@ -218,6 +219,84 @@ async def tank_channel(websocket: WebSocket, tank_id: str) -> None:
         import traceback
         traceback.print_exc()
         await manager.unregister_tank(tank_id)
+
+
+@app.websocket("/ws/radar/source/{source_id}")
+async def radar_source_channel(websocket: WebSocket, source_id: str) -> None:
+    """WebSocket endpoint for radar hardware sources."""
+    try:
+        await radar_broker.register_source(source_id, websocket)
+        print(f"[RADAR] Source {source_id} connected")
+
+        while True:
+            try:
+                message = await websocket.receive_text()
+            except WebSocketDisconnect:
+                raise
+            except Exception as recv_error:
+                print(f"[ERROR] Radar source {source_id} receive error: {recv_error}")
+                raise
+
+            try:
+                payload = json.loads(message)
+            except json.JSONDecodeError:
+                payload = {"raw": message}
+
+            if not isinstance(payload, dict):
+                payload = {"raw": repr(payload)}
+
+            payload.setdefault("type", "radar")
+            payload["sourceId"] = source_id
+            payload["receivedAt"] = utcnow().isoformat()
+
+            serialized = json.dumps(payload)
+
+            try:
+                redis_client = await get_redis_client()
+                await redis_client.xadd(
+                    config.redis_radar_stream,
+                    {
+                        "sourceId": source_id,
+                        "payload": serialized,
+                        "receivedAt": payload["receivedAt"],
+                    },
+                    maxlen=config.redis_radar_maxlen,
+                    approximate=True,
+                )
+            except redis_exceptions.ConnectionError as stream_error:
+                print(f"[WARN] Radar Redis connection lost: {stream_error}")
+                await reset_redis_client()
+            except redis_exceptions.RedisError as stream_error:
+                print(f"[WARN] Failed to append radar reading: {stream_error}")
+
+            await radar_broker.broadcast(serialized)
+
+    except WebSocketDisconnect:
+        print(f"[RADAR] Source {source_id} disconnected")
+    except Exception as exc:
+        print(f"[ERROR] Radar source {source_id} error: {type(exc).__name__}: {exc}")
+    finally:
+        await radar_broker.unregister_source(source_id, websocket)
+
+
+@app.websocket("/ws/radar/listener")
+async def radar_listener_channel(websocket: WebSocket) -> None:
+    """WebSocket endpoint for clients consuming radar data."""
+    await radar_broker.register_listener(websocket)
+    print("[RADAR] Listener connected")
+    try:
+        while True:
+            try:
+                await websocket.receive_text()
+            except WebSocketDisconnect:
+                raise
+            except Exception as recv_error:
+                print(f"[WARN] Radar listener receive error: {recv_error}")
+                break
+    except WebSocketDisconnect:
+        print("[RADAR] Listener disconnected")
+    finally:
+        await radar_broker.unregister_listener(websocket)
 
 
 # ========================================
