@@ -30,6 +30,9 @@ The system uses **Redis Streams** as the event backbone, enabling multiple servi
 - Receives commands from Redis `tank_commands` stream
 - Routes commands to appropriate tank via WebSocket
 - Publishes tank status updates to Redis `tank_status` stream
+- Accepts radar sensor feeds on `/ws/radar/source/{source_id}`
+- Rebroadcasts radar data to listeners at `/ws/radar/listener`
+- Stores radar sweeps to Redis `tank_radar` stream
 - Handles connection lifecycle (registration, heartbeat, disconnection)
 - Deployed on AWS Elastic Beanstalk
 
@@ -73,6 +76,8 @@ The system uses **Redis Streams** as the event backbone, enabling multiple servi
 - **Smooth Transitions**: Configurable ramping between speed changes
 - **Tank-Style Movement**: Forward, backward, pivot left/right, gradual turns
 - **TankShift Library**: Platform-independent C++ API for ESP8266/ESP32
+- **Ultrasonic Radar**: HC-SR04 sensor on SG90 servo for 180° environment scanning
+- **Real-Time Telemetry**: Radar sweep data streamed via WebSocket to Control Broker
 
 ### Secure Communication
 - **AES-256-CBC Encryption**: All LoRa commands encrypted end-to-end
@@ -157,6 +162,22 @@ Supports common LoRa modules (SX1276/SX1278-based):
 | NSS/CS   | D8 (GPIO15) | GPIO5     | Chip Select    |
 | RST      | D0 (GPIO16) | GPIO14    | Reset          |
 | DIO0     | D1 (GPIO5)  | GPIO26    | Interrupt Pin  |
+
+### Ultrasonic Radar Module Connections
+
+The ultrasonic radar system uses an HC-SR04 ultrasonic sensor mounted on an SG90 servo for scanning:
+
+| Component | Pin  | ESP32 Default | ESP8266 Default | Notes                                          |
+|-----------|------|---------------|-----------------|------------------------------------------------|
+| HC-SR04   | VCC  | 5 V (VIN)     | 3V3\*           | Prefer a 5 V rail on ESP8266 if level shifted  |
+| HC-SR04   | GND  | GND           | GND             | Common ground with MCU and servo               |
+| HC-SR04   | Trig | GPIO 32       | D6              | Defined by `TRIG_PIN` constant                 |
+| HC-SR04   | Echo | GPIO 33       | D7              | Add voltage divider when using ESP8266         |
+| SG90      | VCC  | 5 V (external)| 5 V (external)  | Use dedicated supply; share ground             |
+| SG90      | GND  | GND           | GND             | Tie grounds together                           |
+| SG90      | PWM  | GPIO 13       | D5              | Defined by `SERVO_PIN` constant                |
+
+**Note**: HC-SR04 ECHO outputs 5 V. Use a level shifter or resistor divider when interfacing with 3.3 V-only boards such as ESP8266.
 
 Power the logic side with 5 V, feed the motor supply (7–12 V typical) to `VCC`/`VIN`, and keep grounds common between the driver and the MCU.
 
