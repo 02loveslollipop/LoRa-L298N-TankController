@@ -138,7 +138,13 @@ async def health() -> dict:
 @app.get("/tanks")
 async def list_tanks() -> List[dict]:
     """List all registered tanks and their status."""
-    return manager.snapshot()
+    return await manager.snapshot()
+
+
+@app.get("/radars")
+async def list_radars() -> List[dict]:
+    """List all connected radar sources."""
+    return await radar_broker.snapshot_sources()
 
 
 # ========================================
