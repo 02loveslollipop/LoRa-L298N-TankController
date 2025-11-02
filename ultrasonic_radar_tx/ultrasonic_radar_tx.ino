@@ -35,12 +35,13 @@ constexpr float MAX_DISTANCE_CM = 300.0f;
 constexpr unsigned long PULSE_TIMEOUT_US = 25000;
 
 // Wi-Fi and radar broker configuration
-const char* WIFI_SSID = "YOUR_WIFI_SSID";
-const char* WIFI_PASSWORD = "YOUR_WIFI_PASSWORD";
-const char* RADAR_SOURCE_ID = "radar-tx-01";
-const char* RADAR_SERVER_HOST = "192.168.1.100";
-const uint16_t RADAR_SERVER_PORT = 8000;
-const char* RADAR_WS_PATH = "/ws/radar/source/radar-tx-01";
+const char* WIFI_SSID = "UPBWiFi";
+const char* WIFI_PASSWORD = "";
+const char* RADAR_SOURCE_ID = "tank_001";
+// Control broker public endpoint (set to your deployment host)
+const char* RADAR_SERVER_HOST = "ws.nene.02labs.me";
+const uint16_t RADAR_SERVER_PORT = 80;
+String radarWsPath = String("/ws/radar/source/") + RADAR_SOURCE_ID;
 
 constexpr unsigned long WIFI_RETRY_MS = 5000;
 constexpr unsigned long WS_RETRY_MS = 5000;
@@ -165,9 +166,9 @@ void ensureWebsocket() {
   Serial.printf("[WS] Connecting to ws://%s:%u%s\n",
                 RADAR_SERVER_HOST,
                 RADAR_SERVER_PORT,
-                RADAR_WS_PATH);
+                radarWsPath.c_str());
 
-  if (radarSocket.connect(RADAR_SERVER_HOST, RADAR_SERVER_PORT, RADAR_WS_PATH)) {
+  if (radarSocket.connect(RADAR_SERVER_HOST, RADAR_SERVER_PORT, radarWsPath.c_str())) {
     String hello = "{\"type\":\"hello\",\"sourceId\":\"";
     hello += RADAR_SOURCE_ID;
     hello += "\",\"firmware\":\"ultrasonic_radar_tx\"}";

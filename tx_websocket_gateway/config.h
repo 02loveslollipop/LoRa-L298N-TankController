@@ -6,7 +6,7 @@
 #define WIFI_PASSWORD       ""
 
 // ---------- WebSocket Server Configuration ----------
-#define WS_SERVER_HOST      "controllserver-env.eba-erumaege.us-east-1.elasticbeanstalk.com"
+#define WS_SERVER_HOST      "ws.nene.02labs.me"
 #define WS_SERVER_PORT      80
 #define TANK_ID             "tank_001"
 
