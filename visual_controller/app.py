@@ -367,41 +367,81 @@ CONTROLLER_TEMPLATE = """
 <head>
   <meta charset="UTF-8" />
   <title>Tank Controller - {{tank_id}}</title>
-  <style>
-    body { font-family: 'Segoe UI', sans-serif; background: #0d1117; color: #f4f6fb; margin: 0; padding: 2.5rem; }
-    h1 { margin-bottom: 0.25rem; font-size: 2rem; }
-    h2 { margin: 0 0 0.75rem 0; font-size: 1.25rem; }
-    button { padding: 0.75rem 1.5rem; margin: 0.5rem; font-size: 1.05rem; background: #1f6feb; border: none; border-radius: 6px; color: white; cursor: pointer; transition: background 0.2s ease; }
-    button:hover { background: #2d7ff9; }
-    button:disabled { background: #3a3f47; cursor: not-allowed; }
-    .layout { display: flex; flex-wrap: wrap; gap: 2rem; margin-top: 1.5rem; }
-    .panel { background: #121826; border-radius: 12px; padding: 1.5rem; box-shadow: 0 12px 28px rgba(1, 4, 9, 0.35); flex: 1 1 320px; min-width: 280px; }
-    .panel h2 { color: #57a6ff; }
-    #log { background: #0b0e14; border-radius: 10px; padding: 1rem; margin-top: 1.5rem; max-height: 18rem; overflow-y: auto; font-family: monospace; border: 1px solid #1f2633; }
-    .grid { display: grid; grid-template-columns: repeat(3, minmax(120px, 1fr)); gap: 1rem; margin-top: 1rem; }
-    label { display: block; margin-top: 1.5rem; }
-    #statusView { margin-top: 1rem; background: #0b0e14; border-radius: 10px; padding: 1rem; white-space: pre-wrap; font-family: monospace; border: 1px solid #1f2633; }
-    #radarCanvas { width: 100%; max-width: 360px; height: auto; display: block; margin: 0 auto; background: #020b1b; border-radius: 50%; }
-    #radarSummary { margin-top: 0.75rem; font-family: monospace; text-align: center; opacity: 0.85; }
-  </style>
+    <style>
+      body { font-family: 'Segoe UI', sans-serif; background: #0d1117; color: #f4f6fb; margin: 0; padding: 2.5rem; }
+      h1 { margin-bottom: 0.25rem; font-size: 2rem; }
+      h2 { margin: 0 0 0.75rem 0; font-size: 1.25rem; }
+      button { padding: 0.75rem 1.5rem; margin: 0.5rem; font-size: 1.05rem; background: #1f6feb; border: none; border-radius: 6px; color: white; cursor: pointer; transition: background 0.2s ease; }
+      button:hover { background: #2d7ff9; }
+      button:disabled { background: #3a3f47; cursor: not-allowed; }
+      .layout { display: flex; flex-wrap: wrap; gap: 2rem; margin-top: 1.5rem; }
+      .panel { background: #121826; border-radius: 12px; padding: 1.5rem; box-shadow: 0 12px 28px rgba(1, 4, 9, 0.35); flex: 1 1 320px; min-width: 280px; }
+      .panel h2 { color: #57a6ff; }
+      #log { background: #0b0e14; border-radius: 10px; padding: 1rem; margin-top: 1.5rem; max-height: 18rem; overflow-y: auto; font-family: monospace; border: 1px solid #1f2633; }
+      .grid { display: grid; grid-template-columns: repeat(3, minmax(120px, 1fr)); gap: 1rem; margin-top: 1rem; }
+      label { display: block; margin-top: 1.5rem; }
+      #statusView { margin-top: 1rem; background: #0b0e14; border-radius: 10px; padding: 1rem; white-space: pre-wrap; font-family: monospace; border: 1px solid #1f2633; }
+      #radarCanvas { width: 100%; max-width: 360px; height: auto; display: block; margin: 0 auto; background: #020b1b; border-radius: 50%; }
+      #radarSummary { margin-top: 0.75rem; font-family: monospace; text-align: center; opacity: 0.85; }
+      .tab-header { display: flex; gap: 0.75rem; margin-top: 0.75rem; margin-bottom: 1.25rem; }
+      .tab-button { flex: 1; padding: 0.75rem 1rem; background: #161b26; border: 1px solid #2d3547; border-radius: 8px; color: #9fb7ff; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease; }
+      .tab-button:hover { border-color: #3c4c6a; color: #d7e4ff; }
+      .tab-button.active { background: #1f6feb; color: #ffffff; border-color: #1f6feb; box-shadow: 0 8px 22px rgba(31, 111, 235, 0.35); }
+      .tab-content { display: none; }
+      .tab-content.active { display: block; }
+      .nt-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem; margin-top: 1.25rem; }
+      .nt-card { background: #0b0e14; border: 1px solid #1f2633; border-radius: 10px; padding: 1rem; font-size: 0.95rem; color: #d5dcf5; }
+      .nt-card strong { display: block; font-size: 0.95rem; margin-bottom: 0.5rem; color: #57a6ff; }
+      .nt-hint { margin-top: 1rem; font-size: 0.9rem; color: #8fa0c3; opacity: 0.9; }
+      kbd { display: inline-block; padding: 0.35rem 0.6rem; border-radius: 6px; border: 1px solid #2d3547; background: #111726; color: #dbe5ff; box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.35); font-size: 0.95rem; }
+      .status-badge { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.45rem 0.9rem; border-radius: 999px; background: rgba(31, 111, 235, 0.15); border: 1px solid rgba(31, 111, 235, 0.4); color: #cfe1ff; font-size: 0.9rem; margin-right: 0.5rem; }
+    </style>
 </head>
 <body>
   <h1>Tank Controller - {{tank_id}}</h1>
   <p>Status: <span id="status">Connecting...</span></p>
   <div class="layout">
     <section class="panel">
-      <h2>Manual Control</h2>
-      <div class="grid">
-        <button data-command="forward">Forward</button>
-        <button data-command="stop">Stop</button>
-        <button data-command="backward">Backward</button>
-        <button data-command="left">Left</button>
-        <button data-command="right">Right</button>
+      <h2>Controller Modes</h2>
+      <div class="tab-header">
+        <button class="tab-button active" data-target="legacy-controller">Legacy Controller</button>
+        <button class="tab-button" data-target="nt-controller">NT Controller</button>
       </div>
-      <label>Speed:
-        <input type="range" id="speed" min="0" max="255" value="180" />
-        <span id="speedValue">180</span>
-      </label>
+      <div class="tab-content active" id="legacy-controller">
+        <div class="grid">
+          <button data-command="forward">Forward</button>
+          <button data-command="stop">Stop</button>
+          <button data-command="backward">Backward</button>
+          <button data-command="left">Left</button>
+          <button data-command="right">Right</button>
+        </div>
+        <label>Speed:
+          <input type="range" id="speed" min="0" max="255" value="180" />
+          <span id="speedValue">180</span>
+        </label>
+      </div>
+      <div class="tab-content" id="nt-controller">
+        <p>Use your keyboard to drive the tank. Hold the keys to keep moving.</p>
+        <div>
+          <span class="status-badge">Mode: <span id="ntMode">Stopped</span></span>
+          <span class="status-badge">Speed: <span id="ntSpeed">0</span></span>
+        </div>
+        <div class="nt-grid">
+          <div class="nt-card">
+            <strong>Throttle</strong>
+            <p><kbd>W</kbd> accelerate forward<br /><kbd>S</kbd> accelerate reverse</p>
+          </div>
+          <div class="nt-card">
+            <strong>Turning</strong>
+            <p><kbd>A</kbd> turn left<br /><kbd>D</kbd> turn right</p>
+          </div>
+          <div class="nt-card">
+            <strong>Brake</strong>
+            <p><kbd>Space</kbd> immediate stop</p>
+          </div>
+        </div>
+        <p class="nt-hint">Keyboard control is active while the NT tab is selected.</p>
+      </div>
       <div id="statusView"></div>
     </section>
     <section class="panel">
@@ -411,36 +451,214 @@ CONTROLLER_TEMPLATE = """
     </section>
   </div>
   <div id="log"></div>
-  <script>
-    const tankId = "{{tank_id}}";
-    const status = document.getElementById("status");
-    const log = document.getElementById("log");
-    const statusView = document.getElementById("statusView");
-    const speedSlider = document.getElementById("speed");
-    const speedValue = document.getElementById("speedValue");
-    const radarCanvas = document.getElementById("radarCanvas");
-    const radarSummary = document.getElementById("radarSummary");
-    const radarCtx = radarCanvas.getContext("2d");
-    const apiBase = window.location.origin;
-    const wsProtocol = window.location.protocol === "https:" ? "wss" : "ws";
-    const ws = new WebSocket(`${wsProtocol}://${window.location.host}/ws/ui/${tankId}`);
+    <script>
+      const tankId = "{{tank_id}}";
+      const status = document.getElementById("status");
+      const log = document.getElementById("log");
+      const statusView = document.getElementById("statusView");
+      const speedSlider = document.getElementById("speed");
+      const speedValue = document.getElementById("speedValue");
+      const radarCanvas = document.getElementById("radarCanvas");
+      const radarSummary = document.getElementById("radarSummary");
+      const radarCtx = radarCanvas.getContext("2d");
+      const tabButtons = document.querySelectorAll(".tab-button");
+      const tabPanels = document.querySelectorAll(".tab-content");
+      const ntMode = document.getElementById("ntMode");
+      const ntSpeed = document.getElementById("ntSpeed");
+      const legacyPanelId = "legacy-controller";
+      const ntPanelId = "nt-controller";
+      const apiBase = window.location.origin;
+      const wsProtocol = window.location.protocol === "https:" ? "wss" : "ws";
+      const ws = new WebSocket(`${wsProtocol}://${window.location.host}/ws/ui/${tankId}`);
 
-    speedSlider.addEventListener("input", () => speedValue.textContent = speedSlider.value);
+      const NT_SPEED_STEP = 25;
+      const DEFAULT_TURN_SPEED = 160;
+      const MAX_SPEED = 255;
 
-    function write(message) {
-      const el = document.createElement("div");
-      el.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
-      log.prepend(el);
-    }
+      const ntState = {
+        direction: "stopped",
+        speed: 0,
+        turn: null,
+      };
 
-    function renderStatus(data) {
-      statusView.textContent = JSON.stringify(data, null, 2);
-    }
+      let ntActive = false;
 
-    const radarState = {
-      maxDistance: 120,
-      angleStep: 3,
-      cells: new Array(61).fill(null),
+      if (speedSlider && speedValue) {
+        speedSlider.addEventListener("input", () => {
+          speedValue.textContent = speedSlider.value;
+        });
+      }
+
+      function write(message) {
+        const el = document.createElement("div");
+        el.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+        log.prepend(el);
+      }
+
+      function renderStatus(data) {
+        statusView.textContent = JSON.stringify(data, null, 2);
+      }
+
+      function clampSpeed(value) {
+        return Math.max(0, Math.min(MAX_SPEED, Math.round(value)));
+      }
+
+      function updateNTIndicators() {
+        if (ntMode) {
+          const motion = ntState.turn
+            ? (ntState.turn === "left" ? "Turning Left" : "Turning Right")
+            : (ntState.direction === "forward"
+              ? "Forward"
+              : ntState.direction === "backward"
+                ? "Reverse"
+                : "Stopped");
+          ntMode.textContent = motion;
+        }
+        if (ntSpeed) {
+          ntSpeed.textContent = ntState.speed;
+        }
+      }
+      updateNTIndicators();
+
+      function activateTab(targetId) {
+        tabButtons.forEach((btn) => {
+          btn.classList.toggle("active", btn.dataset.target === targetId);
+        });
+        tabPanels.forEach((panel) => {
+          panel.classList.toggle("active", panel.id === targetId);
+        });
+        if (targetId !== ntPanelId && ntState.turn) {
+          finishTurn(ntState.turn);
+        }
+        ntActive = targetId === ntPanelId;
+        updateNTIndicators();
+      }
+
+      tabButtons.forEach((btn) => {
+        btn.addEventListener("click", () => activateTab(btn.dataset.target));
+      });
+      activateTab(legacyPanelId);
+
+      function isTypingTarget(element) {
+        if (!element) {
+          return false;
+        }
+        if (element.isContentEditable) {
+          return true;
+        }
+        const tag = element.tagName ? element.tagName.toUpperCase() : "";
+        return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || tag === "BUTTON";
+      }
+
+      function applyBrake() {
+        ntState.direction = "stopped";
+        ntState.turn = null;
+        ntState.speed = 0;
+        updateNTIndicators();
+        sendCommand("stop", { leftSpeed: 0, rightSpeed: 0 });
+      }
+
+      function accelerate(direction) {
+        if (direction === "forward") {
+          if (ntState.direction === "backward" && ntState.speed > 0) {
+            sendCommand("stop", { leftSpeed: 0, rightSpeed: 0 });
+            ntState.speed = 0;
+          }
+          ntState.direction = "forward";
+        } else {
+          if (ntState.direction === "forward" && ntState.speed > 0) {
+            sendCommand("stop", { leftSpeed: 0, rightSpeed: 0 });
+            ntState.speed = 0;
+          }
+          ntState.direction = "backward";
+        }
+        ntState.turn = null;
+        ntState.speed = Math.max(NT_SPEED_STEP, clampSpeed(ntState.speed + NT_SPEED_STEP));
+        const command = direction === "forward" ? "forward" : "backward";
+        sendCommand(command, { leftSpeed: ntState.speed, rightSpeed: ntState.speed });
+        updateNTIndicators();
+      }
+
+      function startTurn(direction) {
+        const turn = direction === "left" ? "left" : "right";
+        if (ntState.turn === turn) {
+          return;
+        }
+        ntState.turn = turn;
+        const baseSpeed = ntState.speed > 0 ? ntState.speed : DEFAULT_TURN_SPEED;
+        ntState.speed = clampSpeed(baseSpeed);
+        const command = turn === "left" ? "left" : "right";
+        sendCommand(command, { leftSpeed: ntState.speed, rightSpeed: ntState.speed });
+        updateNTIndicators();
+      }
+
+      function finishTurn(direction) {
+        const turn = direction === "left" ? "left" : "right";
+        if (ntState.turn !== turn) {
+          return;
+        }
+        ntState.turn = null;
+        if (ntState.direction === "forward" && ntState.speed > 0) {
+          sendCommand("forward", { leftSpeed: ntState.speed, rightSpeed: ntState.speed });
+        } else if (ntState.direction === "backward" && ntState.speed > 0) {
+          sendCommand("backward", { leftSpeed: ntState.speed, rightSpeed: ntState.speed });
+        } else {
+          applyBrake();
+          return;
+        }
+        updateNTIndicators();
+      }
+
+      function handleKeyDown(event) {
+        if (!ntActive) {
+          return;
+        }
+        if (isTypingTarget(event.target) || isTypingTarget(document.activeElement)) {
+          return;
+        }
+        const key = event.code === "Space" ? " " : event.key.toLowerCase();
+        if (!["w", "a", "s", "d", " "].includes(key)) {
+          return;
+        }
+        event.preventDefault();
+        switch (key) {
+          case "w":
+            accelerate("forward");
+            break;
+          case "s":
+            accelerate("backward");
+            break;
+          case "a":
+            startTurn("left");
+            break;
+          case "d":
+            startTurn("right");
+            break;
+          case " ":
+            applyBrake();
+            break;
+        }
+      }
+
+      function handleKeyUp(event) {
+        if (!ntActive) {
+          return;
+        }
+        const key = event.key.toLowerCase();
+        if (key === "a") {
+          finishTurn("left");
+        } else if (key === "d") {
+          finishTurn("right");
+        }
+      }
+
+      document.addEventListener("keydown", handleKeyDown);
+      document.addEventListener("keyup", handleKeyUp);
+
+      const radarState = {
+        maxDistance: 120,
+        angleStep: 3,
+        cells: new Array(61).fill(null),
       lastSweep: 0,
     };
 
@@ -586,13 +804,30 @@ CONTROLLER_TEMPLATE = """
       }
     };
 
-    async function sendCommand(command) {
+    async function sendCommand(command, options = {}) {
       const payload = {
         command,
-        leftSpeed: parseInt(speedSlider.value, 10),
-        rightSpeed: parseInt(speedSlider.value, 10),
         timestamp: new Date().toISOString(),
       };
+
+      const left = options.leftSpeed;
+      const right = options.rightSpeed;
+      const sequence = options.sequence;
+
+      if (typeof left === "number" && !Number.isNaN(left)) {
+        payload.leftSpeed = clampSpeed(left);
+      } else if (speedSlider) {
+        payload.leftSpeed = clampSpeed(parseInt(speedSlider.value, 10));
+      }
+      if (typeof right === "number" && !Number.isNaN(right)) {
+        payload.rightSpeed = clampSpeed(right);
+      } else if (speedSlider) {
+        payload.rightSpeed = clampSpeed(parseInt(speedSlider.value, 10));
+      }
+      if (sequence !== undefined) {
+        payload.sequence = sequence;
+      }
+
       try {
         const response = await fetch(`${apiBase}/command/${tankId}`, {
           method: "POST",
@@ -600,8 +835,14 @@ CONTROLLER_TEMPLATE = """
           body: JSON.stringify(payload),
         });
         if (!response.ok) {
-          const err = await response.json();
-          write(`Command error: ${err.detail || response.statusText}`);
+          let details = "";
+          try {
+            const err = await response.json();
+            details = err.detail || "";
+          } catch (parseErr) {
+            details = response.statusText;
+          }
+          write(`Command error: ${details || response.statusText}`);
           return;
         }
         write(`Command sent: ${JSON.stringify(payload)}`);
@@ -610,8 +851,12 @@ CONTROLLER_TEMPLATE = """
       }
     }
 
-    document.querySelectorAll("button[data-command]").forEach(btn => {
-      btn.addEventListener("click", () => sendCommand(btn.dataset.command));
+    document.querySelectorAll("button[data-command]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const command = btn.dataset.command;
+        const options = command === "stop" ? { leftSpeed: 0, rightSpeed: 0 } : {};
+        sendCommand(command, options);
+      });
     });
   </script>
 </body>
