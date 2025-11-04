@@ -63,7 +63,26 @@ export const useTankStore = create<TankStore>((set) => ({
           : prev.gps
     }));
   },
-  setRadar: (message) => set({ radar: message }),
+  setRadar: (message) =>
+    set((prev) => {
+      const gps = (message as unknown as { gps?: Record<string, unknown> }).gps;
+      return {
+        radar: message,
+        gps:
+          gps && typeof gps.lat === "number" && typeof gps.lon === "number"
+            ? {
+                lat: gps.lat as number,
+                lon: gps.lon as number,
+                alt_m: (gps.alt_m as number | undefined) ?? prev.gps?.alt_m,
+                speed_mps: (gps.speed_mps as number | undefined) ?? prev.gps?.speed_mps,
+                hdop: (gps.hdop as number | undefined) ?? prev.gps?.hdop,
+                satellites: (gps.satellites as number | undefined) ?? prev.gps?.satellites,
+                fix_age_ms: (gps.fix_age_ms as number | undefined) ?? prev.gps?.fix_age_ms,
+                timestamp: Date.now()
+              }
+            : prev.gps
+      };
+    }),
   setGps: (snapshot) => set({ gps: snapshot }),
   reset: () => set({ telemetry: undefined, radar: undefined, gps: null })
 }));
