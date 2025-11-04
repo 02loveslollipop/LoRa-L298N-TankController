@@ -1,5 +1,8 @@
 #include <Arduino.h>
 #include <WiFi.h>
+#if defined(ESP32)
+#include <esp_wifi.h>
+#endif
 #include <ArduinoWebsockets.h>
 #include <ArduinoJson.h>
 #include <SPI.h>
@@ -82,6 +85,9 @@ void loop() {
 
     wsClient.poll();
     publishStatus();
+#ifdef HAS_PMU
+    loopPMU();
+#endif
     delay(5);
 }
 
@@ -89,6 +95,10 @@ void loop() {
 void connectWiFi() {
     Serial.printf("[WiFi] Connecting to %s\n", WIFI_SSID);
     WiFi.mode(WIFI_STA);
+#if defined(ESP32)
+    WiFi.setSleep(false);
+    esp_wifi_set_ps(WIFI_PS_NONE);
+#endif
     WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
 
     const uint32_t start = millis();

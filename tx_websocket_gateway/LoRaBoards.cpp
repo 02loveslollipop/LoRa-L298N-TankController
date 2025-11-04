@@ -44,6 +44,26 @@ static void setPmuFlag()
 {
     pmuInterrupt = true;
 }
+
+static void keepPmuAwake()
+{
+    if (!PMU) {
+        return;
+    }
+
+    const auto chip = PMU->getChipModel();
+    if (chip == XPOWERS_AXP2101) {
+        auto *axp2101 = static_cast<XPowersAXP2101 *>(PMU);
+        axp2101->disableSleep();
+        axp2101->disableLongPressShutdown();
+        axp2101->setLongPressRestart();
+        axp2101->disableWatchdog();
+        axp2101->setLowBatShutdownThreshold(0);
+    } else if (chip == XPOWERS_AXP192) {
+        auto *axp192 = static_cast<XPowersAXP192 *>(PMU);
+        axp192->disablePowerKeyLongPressPowerOff();
+    }
+}
 #endif
 
 bool beginPower()
@@ -76,6 +96,7 @@ bool beginPower()
     }
 
     PMU->setChargingLedMode(XPOWERS_CHG_LED_CTRL_CHG);
+    keepPmuAwake();
 
     pinMode(PMU_IRQ, INPUT_PULLUP);
     attachInterrupt(PMU_IRQ, setPmuFlag, FALLING);
