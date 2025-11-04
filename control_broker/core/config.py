@@ -15,6 +15,8 @@ class Config:
     redis_status_maxlen: int
     redis_radar_stream: str
     redis_radar_maxlen: int
+    tank_stale_timeout_seconds: int
+    tank_prune_interval_seconds: int
 
 
 def get_config() -> Config:
@@ -27,4 +29,6 @@ def get_config() -> Config:
         redis_status_maxlen=int(os.getenv("REDIS_STATUS_MAXLEN", "500")),
         redis_radar_stream=os.getenv("REDIS_RADAR_STREAM", "tank_radar"),
         redis_radar_maxlen=int(os.getenv("REDIS_RADAR_MAXLEN", "1000")),
+        tank_stale_timeout_seconds=int(os.getenv("TANK_STALE_TIMEOUT_SECONDS", "600")),
+        tank_prune_interval_seconds=int(os.getenv("TANK_PRUNE_INTERVAL_SECONDS", "30")),
     )

@@ -4,9 +4,11 @@ import os
 from collections import defaultdict
 from contextlib import suppress
 from datetime import datetime, timezone
-from typing import Dict, Optional, Set
+from typing import Dict, List, Optional, Set
 
+import httpx
 import redis.asyncio as redis
+import httpx
 from redis import exceptions as redis_exceptions
 from redis.backoff import ExponentialBackoff
 from redis.asyncio.retry import Retry
@@ -53,6 +55,8 @@ REDIS_COMMAND_MAXLEN = int(os.getenv("REDIS_COMMAND_MAXLEN", "500"))
 REDIS_STATUS_START = os.getenv("REDIS_STATUS_STREAM_START", "0-0")
 REDIS_RADAR_STREAM = os.getenv("REDIS_RADAR_STREAM", "tank_radar")
 REDIS_RADAR_START = os.getenv("REDIS_RADAR_STREAM_START", "0-0")
+CONTROL_BROKER_URL = os.getenv("CONTROL_BROKER_URL", "http://control-broker").rstrip("/")
+CONTROL_BROKER_TIMEOUT = float(os.getenv("CONTROL_BROKER_TIMEOUT", "5.0"))
 
 
 # Application setup ---------------------------------------------------
@@ -117,6 +121,32 @@ async def get_redis_client() -> redis.Redis:
     if client is None:
         return await reset_redis_client()
     return client
+
+
+async def fetch_broker_tanks() -> Optional[List[dict]]:
+    """Retrieve tank snapshot from the control broker service."""
+    if not CONTROL_BROKER_URL:
+        return None
+    url = f"{CONTROL_BROKER_URL}/tanks"
+    try:
+        async with httpx.AsyncClient(timeout=CONTROL_BROKER_TIMEOUT) as client:
+            response = await client.get(url)
+            response.raise_for_status()
+            payload = response.json()
+    except httpx.HTTPStatusError as exc:
+        print(f"[VISUAL] Control broker /tanks returned {exc.response.status_code}: {exc}")
+        return None
+    except httpx.HTTPError as exc:
+        print(f"[VISUAL] Control broker unreachable: {exc}")
+        return None
+    except ValueError as exc:
+        print(f"[VISUAL] Control broker returned invalid JSON: {exc}")
+        return None
+
+    if isinstance(payload, list):
+        return payload
+    print(f"[VISUAL] Unexpected control broker payload type: {type(payload)}")
+    return None
 
 
 async def register_subscriber(tank_id: str, websocket: WebSocket) -> None:
@@ -336,6 +366,14 @@ async def list_tanks() -> Dict[str, dict]:
         snapshot[tank_id] = combined
     for source_id, radar in latest_radar.items():
         snapshot.setdefault(source_id, {"radar": radar})
+    broker_snapshot = await fetch_broker_tanks()
+    if broker_snapshot:
+        for entry in broker_snapshot:
+            tank_id = entry.get("tankId")
+            if not tank_id:
+                continue
+            bucket = snapshot.setdefault(tank_id, {})
+            bucket["connection"] = entry
     return snapshot
 
 
@@ -346,6 +384,37 @@ async def enqueue_command(tank_id: str, payload: CommandPayload) -> dict:
     except redis_exceptions.RedisError as exc:
         raise HTTPException(status_code=503, detail="Redis unavailable") from exc
     return {"status": "queued", "tankId": tank_id, "command": payload.dict(exclude_none=True)}
+
+
+@app.post("/tanks/{tank_id}/reset")
+async def request_tank_reset(tank_id: str) -> dict:
+    if not CONTROL_BROKER_URL:
+        raise HTTPException(status_code=503, detail="Control broker URL not configured")
+    url = f"{CONTROL_BROKER_URL}/tanks/{tank_id}/reset"
+    try:
+        async with httpx.AsyncClient(timeout=CONTROL_BROKER_TIMEOUT) as client:
+            response = await client.post(url)
+    except httpx.HTTPError as exc:
+        raise HTTPException(status_code=503, detail="Control broker unreachable") from exc
+
+    try:
+        payload = response.json()
+    except ValueError:
+        payload = {}
+
+    if response.status_code == 404:
+        detail = payload.get("detail") if isinstance(payload, dict) else None
+        raise HTTPException(status_code=404, detail=detail or "Tank not found")
+    if response.status_code >= 400:
+        detail = payload.get("detail") if isinstance(payload, dict) else None
+        raise HTTPException(status_code=502, detail=detail or "Control broker error")
+
+    if not isinstance(payload, dict):
+        payload = {}
+    payload.setdefault("tankId", tank_id)
+    payload.setdefault("status", "reset")
+    payload.setdefault("timestamp", utcnow().isoformat())
+    return payload
 
 
 @app.websocket("/ws/ui/{tank_id}")
@@ -395,6 +464,21 @@ CONTROLLER_TEMPLATE = """
       .nt-hint { margin-top: 1rem; font-size: 0.9rem; color: #8fa0c3; opacity: 0.9; }
       kbd { display: inline-block; padding: 0.35rem 0.6rem; border-radius: 6px; border: 1px solid #2d3547; background: #111726; color: #dbe5ff; box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.35); font-size: 0.95rem; }
       .status-badge { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.45rem 0.9rem; border-radius: 999px; background: rgba(31, 111, 235, 0.15); border: 1px solid rgba(31, 111, 235, 0.4); color: #cfe1ff; font-size: 0.9rem; margin-right: 0.5rem; }
+      .status-badge.offline { background: rgba(216, 59, 125, 0.15); border-color: rgba(216, 59, 125, 0.4); color: #ffcfe4; }
+      .tank-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-top: 0.75rem; flex-wrap: wrap; }
+      .tank-list { list-style: none; padding: 0; margin: 1.25rem 0 0; display: flex; flex-direction: column; gap: 0.75rem; }
+      .tank-item { display: flex; align-items: center; justify-content: space-between; gap: 1rem; background: #0b0e14; border: 1px solid #1f2633; border-radius: 10px; padding: 0.85rem 1rem; transition: border 0.2s ease, box-shadow 0.2s ease; }
+      .tank-item.current { border-color: rgba(31, 111, 235, 0.8); box-shadow: 0 0 0 1px rgba(31, 111, 235, 0.35); }
+      .tank-meta { display: flex; flex-direction: column; gap: 0.35rem; }
+      .tank-id { font-weight: 600; color: #e1e8ff; font-size: 1rem; }
+      .tank-status { font-size: 0.85rem; color: #8fa0c3; opacity: 0.9; }
+      .tank-actions { display: flex; align-items: center; gap: 0.65rem; flex-wrap: wrap; }
+      .tank-actions button { margin: 0; }
+      .reset-btn { background: #d83b7d; }
+      .reset-btn:hover { background: #f0559b; }
+      .refresh-btn { background: #2d7ff9; margin: 0; }
+      .tank-empty { color: #8fa0c3; font-size: 0.95rem; margin-top: 1.25rem; text-align: center; }
+      .tank-updated { font-size: 0.85rem; color: #8fa0c3; }
     </style>
 </head>
 <body>
@@ -444,13 +528,22 @@ CONTROLLER_TEMPLATE = """
       </div>
       <div id="statusView"></div>
     </section>
-    <section class="panel">
-      <h2>Radar Telemetry</h2>
-      <canvas id="radarCanvas" width="360" height="360"></canvas>
-      <div id="radarSummary">Awaiting radar telemetry...</div>
-    </section>
-  </div>
-  <div id="log"></div>
+      <section class="panel">
+        <h2>Radar Telemetry</h2>
+        <canvas id="radarCanvas" width="360" height="360"></canvas>
+        <div id="radarSummary">Awaiting radar telemetry...</div>
+      </section>
+      <section class="panel">
+        <h2>Tank Status</h2>
+        <p class="nt-hint">Monitor connected tanks and trigger remote resets when a unit becomes unresponsive.</p>
+        <div class="tank-toolbar">
+          <button id="refreshTanks" class="refresh-btn">Refresh List</button>
+          <span id="tankRefreshStatus" class="tank-updated"></span>
+        </div>
+        <ul id="tankList" class="tank-list"></ul>
+      </section>
+    </div>
+    <div id="log"></div>
     <script>
       const tankId = "{{tank_id}}";
       const status = document.getElementById("status");
@@ -463,13 +556,19 @@ CONTROLLER_TEMPLATE = """
       const radarCtx = radarCanvas.getContext("2d");
       const tabButtons = document.querySelectorAll(".tab-button");
       const tabPanels = document.querySelectorAll(".tab-content");
+      const tankListEl = document.getElementById("tankList");
+      const refreshTanksBtn = document.getElementById("refreshTanks");
+      const tankRefreshStatus = document.getElementById("tankRefreshStatus");
       const ntMode = document.getElementById("ntMode");
       const ntSpeed = document.getElementById("ntSpeed");
       const legacyPanelId = "legacy-controller";
       const ntPanelId = "nt-controller";
+      const activeTankId = tankId;
+      const TANK_REFRESH_INTERVAL_MS = 30000;
       const apiBase = window.location.origin;
       const wsProtocol = window.location.protocol === "https:" ? "wss" : "ws";
       const ws = new WebSocket(`${wsProtocol}://${window.location.host}/ws/ui/${tankId}`);
+      let tankRefreshHandle = null;
 
       const NT_SPEED_STEP = 25;
       const DEFAULT_TURN_SPEED = 160;
@@ -497,6 +596,193 @@ CONTROLLER_TEMPLATE = """
 
       function renderStatus(data) {
         statusView.textContent = JSON.stringify(data, null, 2);
+      }
+
+      function formatRelativeTime(isoValue, fallbackSeconds) {
+        if (Number.isFinite(fallbackSeconds) && fallbackSeconds >= 0) {
+          if (fallbackSeconds < 5) return "moments ago";
+          if (fallbackSeconds < 60) return `${Math.round(fallbackSeconds)}s ago`;
+          if (fallbackSeconds < 3600) return `${Math.round(fallbackSeconds / 60)}m ago`;
+          return `${Math.round(fallbackSeconds / 3600)}h ago`;
+        }
+        if (!isoValue) {
+          return "unknown";
+        }
+        const parsed = new Date(isoValue);
+        if (Number.isNaN(parsed.getTime())) {
+          return isoValue;
+        }
+        const diffSeconds = Math.max(0, Math.round((Date.now() - parsed.getTime()) / 1000));
+        if (diffSeconds < 5) return "moments ago";
+        if (diffSeconds < 60) return `${diffSeconds}s ago`;
+        if (diffSeconds < 3600) return `${Math.floor(diffSeconds / 60)}m ago`;
+        return `${Math.floor(diffSeconds / 3600)}h ago`;
+      }
+
+      function renderTankList(snapshot) {
+        if (!tankListEl) {
+          return;
+        }
+        tankListEl.innerHTML = "";
+        const entries = Object.entries(snapshot || {});
+        if (!entries.length) {
+          const empty = document.createElement("li");
+          empty.className = "tank-empty";
+          empty.textContent = "No tanks have reported yet.";
+          tankListEl.appendChild(empty);
+          return;
+        }
+        entries.sort(([a], [b]) => a.localeCompare(b));
+        for (const [id, raw] of entries) {
+          const entry = raw || {};
+          const li = document.createElement("li");
+          li.className = "tank-item";
+          if (id === activeTankId) {
+            li.classList.add("current");
+          }
+
+          const connection = entry.connection || {};
+          const telemetry = entry.payload || {};
+          const meta = document.createElement("div");
+          meta.className = "tank-meta";
+
+          const title = document.createElement("span");
+          title.className = "tank-id";
+          title.textContent = id;
+          meta.appendChild(title);
+
+          const info = document.createElement("span");
+          info.className = "tank-status";
+          const lastSeenSource = connection.lastSeen || entry.receivedAt || telemetry.timestamp;
+          const activity = formatRelativeTime(lastSeenSource, connection.stale);
+          const infoParts = [];
+          if (typeof connection.commandsSent === "number") {
+            infoParts.push(`Commands: ${connection.commandsSent}`);
+          }
+          if (activity) {
+            infoParts.push(`Last seen: ${activity}`);
+          }
+          if (!infoParts.length) {
+            infoParts.push("No telemetry recorded yet");
+          }
+          info.textContent = infoParts.join(" • ");
+          meta.appendChild(info);
+
+          const actions = document.createElement("div");
+          actions.className = "tank-actions";
+
+          const badge = document.createElement("span");
+          badge.className = "status-badge";
+          if (connection.connected === true) {
+            badge.textContent = "Connected";
+          } else if (connection.connected === false) {
+            badge.classList.add("offline");
+            badge.textContent = "Disconnected";
+          } else {
+            badge.textContent = "Unknown";
+          }
+          actions.appendChild(badge);
+
+          const resetButton = document.createElement("button");
+          resetButton.type = "button";
+          resetButton.className = "reset-btn";
+          resetButton.textContent = "Reset";
+          resetButton.addEventListener("click", async () => {
+            resetButton.disabled = true;
+            try {
+              await resetTank(id);
+            } finally {
+              resetButton.disabled = false;
+            }
+          });
+          actions.appendChild(resetButton);
+
+          li.appendChild(meta);
+          li.appendChild(actions);
+          tankListEl.appendChild(li);
+        }
+      }
+
+      function cancelTankRefresh() {
+        if (tankRefreshHandle) {
+          clearInterval(tankRefreshHandle);
+          tankRefreshHandle = null;
+        }
+      }
+
+      function scheduleTankRefresh() {
+        if (!tankListEl) {
+          return;
+        }
+        cancelTankRefresh();
+        tankRefreshHandle = setInterval(() => {
+          loadTankList({ announce: false });
+        }, TANK_REFRESH_INTERVAL_MS);
+      }
+
+      async function loadTankList(options = {}) {
+        if (!tankListEl) {
+          return;
+        }
+        const { announce = false } = options;
+        if (refreshTanksBtn) {
+          refreshTanksBtn.disabled = true;
+        }
+        try {
+          const response = await fetch(`${apiBase}/tanks`, { cache: "no-store" });
+          if (!response.ok) {
+            throw new Error(response.statusText);
+          }
+          const snapshot = await response.json();
+          renderTankList(snapshot);
+          if (tankRefreshStatus) {
+            tankRefreshStatus.textContent = `Last updated ${new Date().toLocaleTimeString()}`;
+          }
+          if (announce) {
+            write("Tank list refreshed.");
+          }
+        } catch (error) {
+          if (tankRefreshStatus) {
+            tankRefreshStatus.textContent = "Refresh failed";
+          }
+          console.error("Tank list refresh failed", error);
+          if (announce) {
+            write(`Failed to refresh tanks: ${error}`);
+          }
+        } finally {
+          if (refreshTanksBtn) {
+            refreshTanksBtn.disabled = false;
+          }
+        }
+      }
+
+      async function resetTank(targetTankId) {
+        if (!targetTankId) {
+          return;
+        }
+        try {
+          if (tankRefreshStatus) {
+            tankRefreshStatus.textContent = `Reset requested for ${targetTankId}...`;
+          }
+          const response = await fetch(`${apiBase}/tanks/${encodeURIComponent(targetTankId)}/reset`, {
+            method: "POST",
+          });
+          let payload = {};
+          try {
+            payload = await response.json();
+          } catch (parseError) {
+            payload = {};
+          }
+          if (!response.ok) {
+            const detail = payload && (payload.detail || payload.error);
+            throw new Error(detail || response.statusText);
+          }
+          write(`Reset requested for ${targetTankId}`);
+          await loadTankList({ announce: false });
+        } catch (error) {
+          console.error(`Reset request failed for ${targetTankId}`, error);
+          write(`Reset failed for ${targetTankId}: ${error instanceof Error ? error.message : error}`);
+        }
       }
 
       function clampSpeed(value) {
@@ -538,6 +824,23 @@ CONTROLLER_TEMPLATE = """
         btn.addEventListener("click", () => activateTab(btn.dataset.target));
       });
       activateTab(legacyPanelId);
+
+      if (refreshTanksBtn) {
+        refreshTanksBtn.addEventListener("click", () => loadTankList({ announce: true }));
+      }
+      if (tankListEl) {
+        loadTankList({ announce: false });
+        scheduleTankRefresh();
+        document.addEventListener("visibilitychange", () => {
+          if (document.hidden) {
+            cancelTankRefresh();
+          } else {
+            loadTankList({ announce: false });
+            scheduleTankRefresh();
+          }
+        });
+        window.addEventListener("beforeunload", cancelTankRefresh);
+      }
 
       function isTypingTarget(element) {
         if (!element) {

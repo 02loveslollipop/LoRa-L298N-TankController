@@ -6,7 +6,7 @@ from contextlib import suppress
 from datetime import timedelta
 from typing import List
 
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 import redis.asyncio as redis
 from redis import exceptions as redis_exceptions
@@ -25,7 +25,10 @@ app = FastAPI(title="Tank Control Service", version="2.0.0")
 config = get_config()
 
 # Initialize connection manager
-manager = ConnectionManager()
+manager = ConnectionManager(
+    stale_timeout_seconds=config.tank_stale_timeout_seconds,
+    prune_interval_seconds=config.tank_prune_interval_seconds,
+)
 radar_broker = RadarBroker()
 redis_client_lock = asyncio.Lock()
 
@@ -88,6 +91,7 @@ async def get_redis_client() -> redis.Redis:
 async def on_startup() -> None:
     """Initialize Redis connection and start command listener."""
     await reset_redis_client()
+    await manager.start()
 
     # Start Redis command stream listener
     listener = RedisCommandListener(get_redis_client, reset_redis_client, config, manager)
@@ -107,6 +111,9 @@ async def on_shutdown() -> None:
     if redis_client:
         await redis_client.close()
     app.state.redis = None
+
+    await manager.stop()
+    await manager.close_all()
 
 
 # ========================================
@@ -139,6 +146,15 @@ async def health() -> dict:
 async def list_tanks() -> List[dict]:
     """List all registered tanks and their status."""
     return await manager.snapshot()
+
+
+@app.post("/tanks/{tank_id}/reset")
+async def reset_tank(tank_id: str) -> dict:
+    """Forcefully reset a tank connection and clear its state."""
+    reset = await manager.force_reset(tank_id)
+    if not reset:
+        raise HTTPException(status_code=404, detail="Tank not found")
+    return {"status": "reset", "tankId": tank_id, "timestamp": utcnow().isoformat()}
 
 
 @app.get("/radars")

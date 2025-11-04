@@ -4,7 +4,7 @@ import asyncio
 import json
 from contextlib import suppress
 from datetime import timedelta
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 from fastapi import WebSocket
 
 from models import TankInfo
@@ -14,25 +14,57 @@ from core import utcnow
 class ConnectionManager:
     """Manages WebSocket connections to tanks."""
     
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        *,
+        stale_timeout_seconds: int = 600,
+        prune_interval_seconds: int = 30,
+    ) -> None:
         self._tanks: Dict[str, TankInfo] = {}
         self._lock = asyncio.Lock()
-        self._stale_timeout = timedelta(minutes=10)
+        self._stale_timeout = timedelta(seconds=max(1, stale_timeout_seconds))
+        self._prune_interval = timedelta(seconds=max(5, prune_interval_seconds))
+        self._maintenance_task: Optional[asyncio.Task] = None
 
-    async def _prune_stale(self) -> None:
+    async def start(self) -> None:
+        """Start background maintenance tasks."""
+        if self._maintenance_task and not self._maintenance_task.done():
+            return
+        self._maintenance_task = asyncio.create_task(self._run_auto_prune())
+
+    async def stop(self) -> None:
+        """Stop maintenance tasks and wait for completion."""
+        task = self._maintenance_task
+        if task:
+            task.cancel()
+            with suppress(asyncio.CancelledError):
+                await task
+        self._maintenance_task = None
+
+    async def _run_auto_prune(self) -> None:
+        """Periodically prune stale tank connections."""
+        try:
+            while True:
+                await asyncio.sleep(self._prune_interval.total_seconds())
+                await self._prune_stale(reason="auto-prune")
+        except asyncio.CancelledError:
+            pass
+
+    async def _prune_stale(self, *, reason: str = "stale") -> None:
         """Remove tanks that have been inactive for longer than the timeout."""
         now = utcnow()
-        to_close: List[WebSocket] = []
+        to_close: List[Tuple[str, WebSocket]] = []
         async with self._lock:
             for tank_id, info in list(self._tanks.items()):
                 if (now - info.last_seen) > self._stale_timeout:
                     websocket = info.websocket
                     if websocket is not None:
-                        to_close.append(websocket)
+                        to_close.append((tank_id, websocket))
                     self._tanks.pop(tank_id, None)
-        for websocket in to_close:
+        for tank_id, websocket in to_close:
             with suppress(Exception):
                 await websocket.close(code=1011)
+            print(f"[MANAGER] Pruned tank '{tank_id}' due to {reason}")
 
     async def register_tank(self, tank_id: str, websocket: WebSocket) -> TankInfo:
         """Register a new tank connection."""
@@ -110,3 +142,28 @@ class ConnectionManager:
             info.last_seen = utcnow()
             if payload is not None:
                 info.last_payload = payload
+
+    async def force_reset(self, tank_id: str) -> bool:
+        """Forcefully terminate and remove a tank connection."""
+        async with self._lock:
+            info = self._tanks.pop(tank_id, None)
+        if not info:
+            return False
+        websocket = info.websocket
+        if websocket:
+            with suppress(Exception):
+                await websocket.close(code=1012)
+        print(f"[MANAGER] Forced reset for tank '{tank_id}'")
+        return True
+
+    async def close_all(self) -> None:
+        """Close all tracked tank connections."""
+        async with self._lock:
+            entries = list(self._tanks.items())
+            self._tanks.clear()
+        for tank_id, info in entries:
+            websocket = info.websocket
+            if websocket:
+                with suppress(Exception):
+                    await websocket.close(code=1001)
+            print(f"[MANAGER] Closed connection for tank '{tank_id}' during shutdown")
