@@ -1,6 +1,7 @@
 #if defined(ESP32)
 #include <WiFi.h>
 #include <ESP32Servo.h>
+#include <TinyGPSPlus.h>
 #elif defined(ESP8266)
 #include <ESP8266WiFi.h>
 #include <Servo.h>
@@ -62,6 +63,26 @@ unsigned long lastStepMs = 0;
 unsigned long lastWifiAttempt = 0;
 unsigned long lastWsAttempt = 0;
 
+#if defined(ESP32)
+HardwareSerial SerialGPS(1);
+TinyGPSPlus gps;
+constexpr int GPS_RX_PIN = 34;
+constexpr int GPS_TX_PIN = 12;
+constexpr uint32_t GPS_BAUD_RATE = 9600;
+constexpr unsigned long GPS_MAX_AGE_MS = 5000;
+double gpsLastLat = 0.0;
+double gpsLastLon = 0.0;
+double gpsLastAlt = 0.0;
+double gpsLastSpeedMps = 0.0;
+double gpsLastHdop = 0.0;
+uint8_t gpsLastSatellites = 0;
+unsigned long gpsLastFixMs = 0;
+
+void beginGps();
+void pollGps();
+bool gpsHasFix();
+#endif
+
 void connectToWifi();
 void ensureWebsocket();
 void publishRadarSample(int angleDeg, float distanceCm, bool valid);
@@ -86,6 +107,10 @@ void setup() {
   waitingForServo = true;
   servoCommandMs = millis();
 
+#if defined(ESP32)
+  beginGps();
+#endif
+
   connectToWifi();
 
   radarSocket.onEvent([](WebsocketsEvent event, String data) {
@@ -107,6 +132,10 @@ void setup() {
 }
 
 void loop() {
+#if defined(ESP32)
+  pollGps();
+#endif
+
   if (WiFi.status() != WL_CONNECTED) {
     ensureWebsocket();  // ensures disconnect handling
     connectToWifi();
@@ -198,6 +227,21 @@ void publishRadarSample(int angleDeg, float distanceCm, bool valid) {
   payload += RADAR_SOURCE_ID;
   payload += "\",\"timestamp_ms\":";
   payload += millis();
+#if defined(ESP32)
+  if (gpsHasFix()) {
+    payload += ",\"gps\":{";
+    payload += "\"lat\":"; payload += String(gpsLastLat, 6);
+    payload += ",\"lon\":"; payload += String(gpsLastLon, 6);
+    payload += ",\"alt_m\":"; payload += String(gpsLastAlt, 1);
+    payload += ",\"speed_mps\":"; payload += String(gpsLastSpeedMps, 2);
+    payload += ",\"hdop\":"; payload += String(gpsLastHdop, 1);
+    payload += ",\"satellites\":"; payload += gpsLastSatellites;
+    payload += ",\"fix_age_ms\":"; payload += (millis() - gpsLastFixMs);
+    payload += "}";
+  } else {
+    payload += ",\"gps\":null";
+  }
+#endif
   payload += "}";
 
   if (!radarSocket.send(payload)) {
@@ -274,3 +318,45 @@ void updateSweep() {
     waitingForServo = true;
   }
 }
+
+#if defined(ESP32)
+void beginGps() {
+  SerialGPS.begin(GPS_BAUD_RATE, SERIAL_8N1, GPS_RX_PIN, GPS_TX_PIN);
+  Serial.println("[GPS] Serial initialized for TinyGPS++");
+}
+
+void pollGps() {
+  bool sentenceCompleted = false;
+  while (SerialGPS.available()) {
+    sentenceCompleted |= gps.encode(SerialGPS.read());
+  }
+
+  if (!sentenceCompleted) {
+    return;
+  }
+
+  const unsigned long now = millis();
+  if (gps.location.isValid()) {
+    gpsLastLat = gps.location.lat();
+    gpsLastLon = gps.location.lng();
+    gpsLastFixMs = now;
+  }
+  if (gps.altitude.isValid()) {
+    gpsLastAlt = gps.altitude.meters();
+  }
+  if (gps.speed.isValid()) {
+    gpsLastSpeedMps = gps.speed.mps();
+  }
+  if (gps.hdop.isValid()) {
+    gpsLastHdop = gps.hdop.hdop();
+  }
+  if (gps.satellites.isValid()) {
+    gpsLastSatellites = static_cast<uint8_t>(gps.satellites.value());
+  }
+}
+
+bool gpsHasFix() {
+  const unsigned long age = gps.location.isValid() ? gps.location.age() : GPS_MAX_AGE_MS + 1;
+  return gps.location.isValid() && age <= GPS_MAX_AGE_MS;
+}
+#endif
