@@ -27,6 +27,20 @@ print(f"Created {zip_name}")
 "@
 
 foreach ($service in $services) {
+    if ($service.Name -eq 'visual_controller') {
+        $buildScript = Join-Path $PSScriptRoot 'scripts\build_frontend.py'
+        if (Test-Path $buildScript) {
+            Write-Host "Building frontend bundle" -ForegroundColor Cyan
+            python $buildScript
+            if ($LASTEXITCODE -ne 0) {
+                Write-Host "Frontend build failed." -ForegroundColor Red
+                break
+            }
+        } else {
+            Write-Host "Frontend build script not found at $buildScript" -ForegroundColor Yellow
+        }
+    }
+
     $output = $service.Output
     $path = $service.Path
     if (!(Test-Path $path)) {

@@ -41,6 +41,12 @@ jobs:
           aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
           aws-region: ${{ env.AWS_REGION }}
 
+      - name: Build visual controller frontend
+        if: ${{ matrix.service == 'visual-controller' }}
+        shell: bash
+        run: |
+          python scripts/build_frontend.py
+
       - name: Compute package suffix
         id: suffix
         shell: bash
