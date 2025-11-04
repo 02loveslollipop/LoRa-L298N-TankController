@@ -2,3 +2,8 @@
 __pycache__/
 *.zip
 .conda/
+node_modules/
+dist/
+visual_controller/frontend/node_modules/
+visual_controller/frontend/dist/
+
