@@ -1,0 +1,37 @@
+ .manual-card {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.manual-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.75rem;
+}
+
+.manual-speed {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  font-size: 0.9rem;
+  color: rgba(226, 232, 240, 0.85);
+}
+
+.manual-speed input[type="range"] {
+  width: 100%;
+}
+
+.manual-footer {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+}
+
+.manual-footer .error {
+  color: #f87171;
+}
+
+.btn.danger {
+  background: linear-gradient(135deg, #f87171, #ef4444);
+}

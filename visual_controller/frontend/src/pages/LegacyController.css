@@ -1,0 +1,37 @@
+.legacy-layout {
+  display: grid;
+  grid-template-columns: minmax(320px, 420px) 1fr;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.legacy-left {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.legacy-right {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.telemetry-card {
+  max-height: 280px;
+  overflow: auto;
+  font-size: 0.85rem;
+  background: rgba(8, 15, 29, 0.9);
+}
+
+.telemetry-card pre {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+@media (max-width: 1100px) {
+  .legacy-layout {
+    grid-template-columns: 1fr;
+  }
+}
