@@ -1,0 +1,88 @@
+name: Deploy to Elastic Beanstalk
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+env:
+  AWS_REGION: us-east-1
+  S3_BUCKET: elasticbeanstalk-us-east-1-036027635110
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - service: control-broker
+            path: control_broker
+            application: "controll server"
+            environment: "Controllserver-env"
+          - service: stream-cleaner
+            path: stream_cleaner
+            application: "Stream-cleaner"
+            environment: "Stream-cleaner-env"
+          - service: visual-controller
+            path: visual_controller
+            application: "visual-controller"
+            environment: "Visual-controller-env"
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Compute package suffix
+        id: suffix
+        shell: bash
+        run: |
+          SHORT_SHA="${GITHUB_SHA::7}"
+          TIMESTAMP="$(date +%Y%m%d%H%M%S)"
+          echo "value=${SHORT_SHA}-${TIMESTAMP}" >> "$GITHUB_OUTPUT"
+
+      - name: Package service
+        id: package
+        working-directory: ${{ matrix.path }}
+        shell: bash
+        run: |
+          ZIP_NAME="${{ matrix.service }}-${{ steps.suffix.outputs.value }}.zip"
+          zip -r "../${ZIP_NAME}" .
+          echo "zip-name=${ZIP_NAME}" >> "$GITHUB_OUTPUT"
+
+      - name: Upload package to S3
+        id: upload
+        env:
+          ZIP_NAME: ${{ steps.package.outputs.zip-name }}
+        shell: bash
+        run: |
+          S3_KEY="deployments/${{ matrix.service }}/${ZIP_NAME}"
+          aws s3 cp "${ZIP_NAME}" "s3://${{ env.S3_BUCKET }}/${S3_KEY}"
+          echo "s3-key=${S3_KEY}" >> "$GITHUB_OUTPUT"
+
+      - name: Create Elastic Beanstalk application version
+        id: version
+        env:
+          VERSION_LABEL: ${{ matrix.service }}-${{ steps.suffix.outputs.value }}
+        shell: bash
+        run: |
+          aws elasticbeanstalk create-application-version \
+            --application-name "${{ matrix.application }}" \
+            --version-label "${VERSION_LABEL}" \
+            --source-bundle S3Bucket=${{ env.S3_BUCKET }},S3Key=${{ steps.upload.outputs.s3-key }} \
+            --process
+          echo "version-label=${VERSION_LABEL}" >> "$GITHUB_OUTPUT"
+
+      - name: Update Elastic Beanstalk environment
+        shell: bash
+        run: |
+          aws elasticbeanstalk update-environment \
+            --environment-name "${{ matrix.environment }}" \
+            --version-label "${{ steps.version.outputs.version-label }}"
