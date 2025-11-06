@@ -1,16 +1,29 @@
 import { useEffect, useMemo, useState } from "react";
 import { MapContainer, Marker, TileLayer, useMap } from "react-leaflet";
 import L from "leaflet";
+import "leaflet/dist/leaflet.css";
 import { GpsSnapshot } from "../../state/useTankStore";
 import "./MapView.css";
 
-const markerIcon = new L.Icon({
+// Fix for default marker icon
+import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
+import markerIcon from "leaflet/dist/images/marker-icon.png";
+import markerShadow from "leaflet/dist/images/marker-shadow.png";
+
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconUrl: markerIcon,
+  iconRetinaUrl: markerIcon2x,
+  shadowUrl: markerShadow,
+});
+
+const customMarkerIcon = new L.Icon({
   iconUrl:
-    "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-lightblue.png",
+    "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png",
   iconSize: [25, 41],
   iconAnchor: [12, 41],
   popupAnchor: [1, -34],
-  shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png",
+  shadowUrl: markerShadow,
   shadowSize: [41, 41]
 });
 
@@ -58,7 +71,7 @@ export function MapView({ gps }: MapViewProps) {
           }}
         />
         {hasFix && (
-          <Marker position={position} icon={markerIcon}>
+          <Marker position={position} icon={customMarkerIcon}>
             <span>Tank</span>
           </Marker>
         )}
