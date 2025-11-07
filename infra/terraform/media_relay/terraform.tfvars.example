@@ -1,0 +1,9 @@
+region        = "us-east-1"
+name          = "mediamtx-relay"
+publish_user  = "example"
+publish_pass  = "password"
+viewer_user   = "any"
+viewer_pass   = ""
+allowed_cidrs = ["0.0.0.0/0"]
+instance_type = "t3.small"
+#existing_eip_allocation_id = "eipalloc-0123456789abcdef0"

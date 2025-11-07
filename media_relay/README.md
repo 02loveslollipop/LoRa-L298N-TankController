@@ -1,10 +1,10 @@
 # Media Relay Service
 
-This folder contains the container bundle deployed to the dedicated Elastic Beanstalk environment that serves as the low-latency relay (`rtsp.nene.02labs.me`). The container ships [Mediamtx](https://github.com/bluenviron/mediamtx), providing RTSP ingest together with WebRTC and LL-HLS playback for the robot camera stream.
+This folder contains the Mediamtx configuration and optional Docker bundle used for local testing of the low-latency relay (`rtsp.nene.02labs.me`). Production deployment is handled by the Terraform stack under `infra/terraform/media_relay`, which provisions an EC2 instance, installs Docker, copies `mediamtx.yml`, and runs the upstream `bluenviron/mediamtx` image behind an Elastic IP.
 
 ## Runtime configuration
 
-The container reads the following environment variables that must be configured in the Elastic Beanstalk environment before deploying:
+The Terraform module renders credentials directly into `mediamtx.yml`. When running the container manually (outside of Terraform), you can still configure the following environment variables:
 
 | Variable | Purpose |
 | --- | --- |
@@ -24,12 +24,7 @@ Ports exposed by the container:
 - `9998/tcp`: Prometheus metrics (optional)
 - `9999/tcp`: pprof endpoint (optional)
 
-Ensure the Elastic Beanstalk load balancer and security groups forward the required ports. For WebRTC, terminate TLS at the load balancer and forward HTTPS traffic to port `8889`.
-
-## Elastic Beanstalk configuration overrides
-
-The `.platform/elasticbeanstalk/docker/container-configuration.json` file forces Elastic Beanstalk to publish every required TCP/UDP port when the single-instance environment launches the container. Do not remove this file: without it the platform only exposes the first port listed in the Dockerfile.
+Ensure the EC2 security group created by Terraform allows inbound traffic on these ports (see `infra/terraform/media_relay`). Clients connect directly to the Elastic IP bound to the instance.
 
 ## Deployment bundle
-
-The GitHub Actions workflow zips the contents of this folder (including the `.platform` overrides) and uploads the archive as an application version. The Dockerfile copies `mediamtx.yml` into the image and relies on the Mediamtx entrypoint to launch the server.
+The Dockerfile copies `mediamtx.yml` into an image and relies on the Mediamtx entrypoint to launch the server. Use it for local verification only; live infrastructure is managed via Terraform.
