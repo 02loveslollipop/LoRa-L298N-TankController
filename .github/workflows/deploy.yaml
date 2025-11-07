@@ -1,9 +1,6 @@
 name: Deploy Infrastructure and Services
 
 on:
-  push:
-    branches:
-      - main
   workflow_dispatch:
 
 env:
