@@ -87,3 +87,9 @@ variable "log_level" {
   type        = string
   default     = "info"
 }
+
+variable "domain_name" {
+  description = "Fully qualified domain name to secure with Let's Encrypt (enables the Caddy reverse proxy)"
+  type        = string
+  default     = null
+}

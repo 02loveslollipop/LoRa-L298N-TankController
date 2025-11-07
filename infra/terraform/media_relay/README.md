@@ -5,8 +5,10 @@ This module provisions everything required to host the relay on a single EC2 ins
 ## What gets created
 
 - Security group exposing TCP `8554`, `1935`, `8888`, `8889`, `9998`, `9999` and UDP `8200` to the CIDR list you supply.
+- When `domain_name` is set, TCP `80` and `443` are also opened for the TLS proxy.
 - EC2 instance (default `t3.small`) running in the chosen subnet/VPC.
 - User data script that installs Docker and runs Mediamtx with the configuration rendered from Terraform inputs.
+- Optional Caddy reverse proxy that fetches Let's Encrypt certificates for the supplied domain and fronts the Mediamtx HTTP/WebRTC endpoints.
 - Elastic IP associated with the instance for a stable ingress point.
 	- If you supply `existing_eip_allocation_id`, the module reuses that Elastic IP instead of allocating a new one.
 
@@ -24,6 +26,7 @@ Key variables:
 | `key_name` | EC2 key pair used for SSH access | `orion` |
 | `existing_eip_allocation_id` | Allocation ID of an existing Elastic IP to reuse | `null` |
 | `mediamtx_version` | Container tag pulled from Docker Hub | `1.15.3` |
+| `domain_name` | FQDN used to request a Let's Encrypt certificate (enables the Caddy TLS proxy) | `null` |
 | `tags` | Extra tags applied to every resource | `{}` |
 
 ## Scaling & updates
@@ -55,6 +58,7 @@ publish_pass  = "change-me"
 viewer_user   = "any"
 viewer_pass   = ""
 allowed_cidrs = ["203.0.113.0/24", "198.51.100.10/32"]
+#domain_name   = "stream.example.com"
 #existing_eip_allocation_id = "eipalloc-0123456789abcdef0"
 ```
 

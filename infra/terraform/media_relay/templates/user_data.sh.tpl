@@ -31,3 +31,24 @@ fi
   -p 8200:8200/udp \
   -v /opt/mediamtx/mediamtx.yml:/mediamtx.yml:ro \
   bluenviron/mediamtx:${mediamtx_version}
+
+%{ if domain_name != "" }
+mkdir -p /opt/caddy /opt/caddy/data /opt/caddy/config
+cat <<'EOF' >/opt/caddy/Caddyfile
+${caddy_config}
+EOF
+
+/usr/bin/docker pull caddy:2
+if /usr/bin/docker ps -a --format '{{.Names}}' | grep -q '^caddy$'; then
+  /usr/bin/docker rm -f caddy
+fi
+
+/usr/bin/docker run -d \
+  --name caddy \
+  --restart unless-stopped \
+  --network host \
+  -v /opt/caddy/Caddyfile:/etc/caddy/Caddyfile:ro \
+  -v /opt/caddy/data:/data \
+  -v /opt/caddy/config:/config \
+  caddy:2
+%{ endif }

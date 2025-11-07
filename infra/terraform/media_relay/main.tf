@@ -36,7 +36,9 @@ data "aws_eip" "existing" {
 
 locals {
   subnet_id = var.subnet_id != null ? var.subnet_id : data.aws_subnets.selected.ids[0]
-  tcp_ports = [8554, 1935, 8888, 8889, 9998, 9999]
+  base_tcp_ports    = [8554, 1935, 8888, 8889, 9998, 9999]
+  extra_http_ports  = var.domain_name != null ? [80, 443] : []
+  tcp_ports         = concat(local.base_tcp_ports, local.extra_http_ports)
   udp_ports = [8200]
   port_rules = concat(
     [for p in local.tcp_ports : {
@@ -77,9 +79,15 @@ locals {
     viewer_pass  = var.viewer_pass
   })
 
+  caddy_config = var.domain_name != null ? templatefile("${path.module}/templates/Caddyfile.tpl", {
+    domain_name = var.domain_name
+  }) : ""
+
   user_data = templatefile("${path.module}/templates/user_data.sh.tpl", {
     mediamtx_config = local.mediamtx_config
     mediamtx_version = var.mediamtx_version
+    domain_name      = var.domain_name != null ? var.domain_name : ""
+    caddy_config     = local.caddy_config
   })
 }
 
