@@ -7,23 +7,34 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 )
 
 type streamerConfig struct {
-	ffmpegBinary  string
-	cameraDevice  string
-	audioDevice   string
-	frameRate     string
-	resolution    string
-	bitrate       string
-	streamName    string
-	targetHost    string
-	publishUser   string
-	publishPass   string
-	rtspTransport string
-	inputFormat   string
+	ffmpegBinary      string
+	cameraDevice      string
+	audioDevice       string
+	frameRate         string
+	resolution        string
+	videoBitrate      string
+	videoMaxRate      string
+	videoBufSize      string
+	videoCodec        string
+	videoFormat       string
+	streamName        string
+	targetHost        string
+	publishUser       string
+	publishPass       string
+	rtspTransport     string
+	inputFormat       string
+	audioBitrate      string
+	audioSampleRate   string
+	audioChannels     string
+	sineFrequency     string
+	generateSineAudio bool
+	useTestPattern    bool
 }
 
 func main() {
@@ -60,19 +71,30 @@ func main() {
 }
 
 func loadConfig() streamerConfig {
+	baseBitrate := readEnv("VIDEO_BITRATE", "2M")
 	return streamerConfig{
-		ffmpegBinary:  readEnv("FFMPEG_BINARY", "ffmpeg"),
-		cameraDevice:  readEnv("CAMERA_DEVICE", "/dev/video0"),
-		audioDevice:   os.Getenv("AUDIO_DEVICE"),
-		frameRate:     readEnv("FRAME_RATE", "30"),
-		resolution:    readEnv("VIDEO_SIZE", "1280x720"),
-		bitrate:       readEnv("VIDEO_BITRATE", "1500k"),
-		streamName:    readEnv("STREAM_NAME", "robot"),
-		targetHost:    readEnv("RELAY_HOST", "rtsp.nene.02labs.me:8554"),
-		publishUser:   readEnv("RELAY_PUBLISH_USER", ""),
-		publishPass:   readEnv("RELAY_PUBLISH_PASS", ""),
-		rtspTransport: readEnv("RTSP_TRANSPORT", "tcp"),
-		inputFormat:   os.Getenv("INPUT_FORMAT"),
+		ffmpegBinary:      readEnv("FFMPEG_BINARY", "ffmpeg"),
+		cameraDevice:      readEnv("CAMERA_DEVICE", "/dev/video0"),
+		audioDevice:       os.Getenv("AUDIO_DEVICE"),
+		frameRate:         readEnv("FRAME_RATE", "30"),
+		resolution:        readEnv("VIDEO_SIZE", "1280x720"),
+		videoBitrate:      baseBitrate,
+		videoMaxRate:      readEnv("VIDEO_MAXRATE", baseBitrate),
+		videoBufSize:      readEnv("VIDEO_BUFSIZE", baseBitrate),
+		videoCodec:        readEnv("VIDEO_CODEC", "h264_rkmpp"),
+		videoFormat:       readEnv("VIDEO_FORMAT", "nv12"),
+		streamName:        readEnv("STREAM_NAME", "robot"),
+		targetHost:        readEnv("RELAY_HOST", "rtsp.02labs.me:8554"),
+		publishUser:       readEnv("RELAY_PUBLISH_USER", ""),
+		publishPass:       readEnv("RELAY_PUBLISH_PASS", ""),
+		rtspTransport:     readEnv("RTSP_TRANSPORT", "tcp"),
+		inputFormat:       os.Getenv("INPUT_FORMAT"),
+		audioBitrate:      readEnv("AUDIO_BITRATE", "128k"),
+		audioSampleRate:   readEnv("AUDIO_SAMPLE_RATE", "48000"),
+		audioChannels:     readEnv("AUDIO_CHANNELS", "2"),
+		sineFrequency:     readEnv("SINE_FREQUENCY", "1000"),
+		generateSineAudio: readEnvBool("GENERATE_SINE_AUDIO", true),
+		useTestPattern:    readEnvBool("USE_TEST_PATTERN", false),
 	}
 }
 
@@ -92,50 +114,54 @@ func runFFmpeg(ctx context.Context, cfg streamerConfig, logger *log.Logger) erro
 }
 
 func buildFFmpegArgs(cfg streamerConfig) []string {
-	args := []string{
-		"-f", "v4l2",
+	args := []string{"-re"}
+
+	if cfg.useTestPattern {
+		args = append(args,
+			"-f", "lavfi",
+			"-i", fmt.Sprintf("testsrc=size=%s:rate=%s", cfg.resolution, cfg.frameRate),
+		)
+	} else {
+		args = append(args, "-f", "v4l2")
+		if cfg.inputFormat != "" {
+			args = append(args, "-input_format", cfg.inputFormat)
+		}
+		args = append(args,
+			"-thread_queue_size", "256",
+			"-framerate", cfg.frameRate,
+			"-video_size", cfg.resolution,
+			"-i", cfg.cameraDevice,
+		)
 	}
-	if cfg.inputFormat != "" {
-		args = append(args, "-input_format", cfg.inputFormat)
-	}
-	args = append(args,
-		"-thread_queue_size", "256",
-		"-framerate", cfg.frameRate,
-		"-video_size", cfg.resolution,
-		"-i", cfg.cameraDevice,
-	)
 
 	if cfg.audioDevice != "" {
-		audioArgs := []string{
+		args = append(args,
 			"-f", "alsa",
 			"-thread_queue_size", "256",
 			"-i", cfg.audioDevice,
-		}
-		args = append(args, audioArgs...)
+		)
+	} else if cfg.generateSineAudio {
+		args = append(args,
+			"-f", "lavfi",
+			"-i", fmt.Sprintf("sine=frequency=%s:sample_rate=%s", cfg.sineFrequency, cfg.audioSampleRate),
+		)
 	}
 
-	videoOut := []string{
-		"-vf", "format=yuv420p",
-		"-c:v", "libx264",
-		"-preset", "ultrafast",
-		"-tune", "zerolatency",
-		"-pix_fmt", "yuv420p",
-		"-b:v", cfg.bitrate,
-		"-maxrate", cfg.bitrate,
-		"-bufsize", cfg.bitrate,
-		"-g", "60",
-		"-keyint_min", "30",
-	}
-	args = append(args, videoOut...)
+	args = append(args,
+		"-vf", fmt.Sprintf("format=%s", cfg.videoFormat),
+		"-c:v", cfg.videoCodec,
+		"-b:v", cfg.videoBitrate,
+		"-maxrate", cfg.videoMaxRate,
+		"-bufsize", cfg.videoBufSize,
+	)
 
-	if cfg.audioDevice != "" {
-		audioOut := []string{
+	if cfg.audioDevice != "" || cfg.generateSineAudio {
+		args = append(args,
 			"-c:a", "aac",
-			"-b:a", "128k",
-			"-ar", "48000",
-			"-ac", "2",
-		}
-		args = append(args, audioOut...)
+			"-b:a", cfg.audioBitrate,
+			"-ar", cfg.audioSampleRate,
+			"-ac", cfg.audioChannels,
+		)
 	}
 
 	args = append(args,
@@ -166,4 +192,19 @@ func readEnv(key, fallback string) string {
 		return v
 	}
 	return fallback
+}
+
+func readEnvBool(key string, fallback bool) bool {
+	v, ok := os.LookupEnv(key)
+	if !ok || v == "" {
+		return fallback
+	}
+	switch strings.ToLower(v) {
+	case "1", "true", "t", "yes", "y":
+		return true
+	case "0", "false", "f", "no", "n":
+		return false
+	default:
+		return fallback
+	}
 }
