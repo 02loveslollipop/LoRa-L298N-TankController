@@ -26,6 +26,10 @@ Ports exposed by the container:
 
 Ensure the Elastic Beanstalk load balancer and security groups forward the required ports. For WebRTC, terminate TLS at the load balancer and forward HTTPS traffic to port `8889`.
 
+## Elastic Beanstalk configuration overrides
+
+The `.platform/elasticbeanstalk/docker/container-configuration.json` file forces Elastic Beanstalk to publish every required TCP/UDP port when the single-instance environment launches the container. Do not remove this file: without it the platform only exposes the first port listed in the Dockerfile.
+
 ## Deployment bundle
 
-The GitHub Actions workflow zips the contents of this folder and uploads the archive as an application version. The Dockerfile copies `mediamtx.yml` into the image and relies on the Mediamtx entrypoint to launch the server.
+The GitHub Actions workflow zips the contents of this folder (including the `.platform` overrides) and uploads the archive as an application version. The Dockerfile copies `mediamtx.yml` into the image and relies on the Mediamtx entrypoint to launch the server.

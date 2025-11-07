@@ -70,8 +70,17 @@ jobs:
         shell: bash
         run: |
           ZIP_NAME="${{ matrix.service }}-${{ steps.suffix.outputs.value }}.zip"
-          zip -r "../${ZIP_NAME}" .
+          shopt -s dotglob
+          zip -r "../${ZIP_NAME}" . -x "*/__pycache__/*" -x "*.pyc"
           echo "zip-name=${ZIP_NAME}" >> "$GITHUB_OUTPUT"
+
+      - name: Validate media relay package contents
+        if: ${{ matrix.service == 'media-relay' }}
+        env:
+          ZIP_NAME: ${{ steps.package.outputs.zip-name }}
+        shell: bash
+        run: |
+          unzip -l "${ZIP_NAME}" | grep '.platform/elasticbeanstalk/docker/container-configuration.json'
 
       - name: Upload package to S3
         id: upload
