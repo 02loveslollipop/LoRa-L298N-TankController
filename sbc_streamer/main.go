@@ -84,7 +84,7 @@ func loadConfig() streamerConfig {
 		videoCodec:        readEnv("VIDEO_CODEC", "h264_rkmpp"),
 		videoFormat:       readEnv("VIDEO_FORMAT", "nv12"),
 		streamName:        readEnv("STREAM_NAME", "robot"),
-		targetHost:        readEnv("RELAY_HOST", "rtsp.02labs.me:8554"),
+		targetHost:        readEnv("RELAY_HOST", "rtsp.nene.02labs.me:8554"),
 		publishUser:       readEnv("RELAY_PUBLISH_USER", ""),
 		publishPass:       readEnv("RELAY_PUBLISH_PASS", ""),
 		rtspTransport:     readEnv("RTSP_TRANSPORT", "tcp"),
