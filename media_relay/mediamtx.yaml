@@ -1,4 +1,4 @@
-# Mediamtx configuration for the low-latency relay
+# Mediamtx configuration for the
 logLevel: info
 
 rtsp:

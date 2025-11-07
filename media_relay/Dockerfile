@@ -1,5 +1,5 @@
-FROM docker.io/bluenviron/mediamtx:1.7.1
+FROM bluenviron/mediamtx:1.15.3
 
 COPY mediamtx.yaml /mediamtx.yaml
 
-CMD ["/mediamtx", "--config", "/mediamtx.yaml"]
+CMD ["/mediamtx", "/mediamtx.yaml"]
