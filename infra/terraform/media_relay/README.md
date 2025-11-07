@@ -21,6 +21,7 @@ Key variables:
 | `publish_user` / `publish_pass` | Credentials the SBC uses to publish | **required** |
 | `viewer_user` / `viewer_pass` | Playback credentials (`viewer_user=any` allows anonymous access) | `any` / empty |
 | `allowed_cidrs` | List of CIDR blocks allowed to reach the relay | `["0.0.0.0/0"]` |
+| `key_name` | EC2 key pair used for SSH access | `orion` |
 | `existing_eip_allocation_id` | Allocation ID of an existing Elastic IP to reuse | `null` |
 | `mediamtx_version` | Container tag pulled from Docker Hub | `1.15.3` |
 | `tags` | Extra tags applied to every resource | `{}` |
