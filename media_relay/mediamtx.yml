@@ -1,0 +1,53 @@
+logLevel: info
+
+authMethod: internal
+authInternalUsers:
+  - user: ${RELAY_PUBLISH_USER}
+    pass: ${RELAY_PUBLISH_PASS}
+    permissions:
+      - action: publish
+        path: robot
+  - user: ${RELAY_VIEWER_USER}
+    pass: ${RELAY_VIEWER_PASS}
+    permissions:
+      - action: read
+        path: robot
+      - action: playback
+        path: robot
+  - user: any
+    pass:
+    ips: ['127.0.0.1', '::1']
+    permissions:
+      - action: api
+      - action: metrics
+      - action: pprof
+
+rtsp: yes
+rtspAddress: :8554
+
+rtmp: yes
+rtmpAddress: :1935
+
+hls: yes
+hlsAddress: :8888
+hlsVariant: lowLatency
+hlsSegmentDuration: 1s
+hlsPartDuration: 200ms
+
+webrtc: yes
+webrtcAddress: :8889
+webrtcAllowOrigin: '*'
+webrtcLocalUDPAddress: :8200
+webrtcICEServers2:
+  - url: stun:stun.l.google.com:19302
+
+metrics: yes
+metricsAddress: :9998
+
+pprof: yes
+pprofAddress: :9999
+
+paths:
+  robot:
+    source: publisher
+    overridePublisher: yes

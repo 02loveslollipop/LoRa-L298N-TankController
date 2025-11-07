@@ -10,8 +10,8 @@ The container reads the following environment variables that must be configured 
 | --- | --- |
 | `RELAY_PUBLISH_USER` | Username the SBC uses while pushing the RTSP stream |
 | `RELAY_PUBLISH_PASS` | Password the SBC uses while pushing the RTSP stream |
-| `RELAY_VIEWER_USER` | Optional username required by frontend clients (leave empty to disable auth) |
-| `RELAY_VIEWER_PASS` | Optional password required by frontend clients (leave empty to disable auth) |
+| `RELAY_VIEWER_USER` | Username required by frontend clients (set to `any` to allow anonymous access) |
+| `RELAY_VIEWER_PASS` | Password required by frontend clients (leave blank when `RELAY_VIEWER_USER=any`) |
 
 If you enable viewer authentication, update the frontend to use the same credentials when negotiating playback.
 
@@ -20,7 +20,7 @@ Ports exposed by the container:
 - `8554/tcp`: RTSP ingest from the SBC
 - `1935/tcp`: RTMP ingest (alternative to RTSP)
 - `8888/tcp`: HTTP server (HLS playback and API)
-- `8889/tcp` plus `UDP 8200-8299`: WebRTC signalling and media
+- `8889/tcp` plus `8200/udp`: WebRTC signalling and media
 - `9998/tcp`: Prometheus metrics (optional)
 - `9999/tcp`: pprof endpoint (optional)
 
@@ -28,4 +28,4 @@ Ensure the Elastic Beanstalk load balancer and security groups forward the requi
 
 ## Deployment bundle
 
-The GitHub Actions workflow zips the contents of this folder and uploads the archive as an application version. The Dockerfile simply copies the Mediamtx configuration and launches the server binary.
+The GitHub Actions workflow zips the contents of this folder and uploads the archive as an application version. The Dockerfile copies `mediamtx.yml` into the image and relies on the Mediamtx entrypoint to launch the server.
