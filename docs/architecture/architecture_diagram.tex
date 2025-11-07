@@ -1,0 +1,96 @@
+\documentclass[border=10pt]{standalone}
+\usepackage{tikz}
+\usetikzlibrary{shapes.geometric, arrows.meta, positioning, fit, backgrounds}
+
+\begin{document}
+
+\tikzset{
+    system/.style={
+        rectangle,
+        rounded corners,
+        minimum width=3cm,
+        minimum height=1.2cm,
+        text centered,
+        draw=black,
+        fill=blue!20,
+        thick,
+        font=\sffamily\bfseries
+    },
+    hardware/.style={
+        system,
+        fill=orange!30
+    },
+    cloud/.style={
+        system,
+        fill=green!20
+    },
+    database/.style={
+        cylinder,
+        cylinder uses custom fill,
+        cylinder body fill=red!20,
+        cylinder end fill=red!30,
+        minimum width=2.5cm,
+        minimum height=1.5cm,
+        draw=black,
+        thick,
+        font=\sffamily\bfseries
+    },
+    ui/.style={
+        system,
+        fill=purple!20
+    },
+    arrow/.style={
+        thick,
+        ->,
+        >=Stealth
+    },
+    group/.style={
+        rectangle,
+        rounded corners,
+        draw=black,
+        dashed,
+        inner sep=10pt
+    }
+}
+
+\begin{tikzpicture}[node distance=2cm and 3cm]
+
+    % Hardware Layer
+    \node[hardware] (tank) {Tank Device\\(ESP32 + L298N)};
+    \node[hardware, right=of tank] (lora-tx) {LoRa\\Transmitter};
+    \node[hardware, below=1cm of tank] (radar) {Ultrasonic\\Radar};
+    
+    % Cloud Services Layer
+    \node[cloud, above=3cm of tank, xshift=1.5cm] (broker) {Control\\Broker};
+    \node[cloud, right=of broker] (visual) {Visual\\Controller};
+    
+    % Database
+    \node[database, below=1.5cm of broker] (redis) {Redis\\Streams};
+    
+    % UI Layer
+    \node[ui, above=1.5cm of visual] (browser) {Browser UI};
+    
+    % Media Services (optional)
+    \node[cloud, left=of broker] (media) {Media\\Relay};
+    \node[cloud, above=1cm of media] (streamer) {SBC\\Streamer};
+    
+    % Connections
+    \draw[arrow, <->] (tank) -- (broker) node[midway, right, font=\small] {WebSocket};
+    \draw[arrow, <->] (lora-tx) -- (tank) node[midway, above, font=\small] {LoRa};
+    \draw[arrow, ->] (radar) -- (tank);
+    \draw[arrow, ->] (broker) -- (redis);
+    \draw[arrow, <-] (visual) -- (redis);
+    \draw[arrow, <->] (visual) -- (browser) node[midway, right, font=\small] {HTTP/WS};
+    \draw[arrow, <->] (broker) -- (visual);
+    \draw[arrow, ->] (streamer) -- (media);
+    \draw[arrow, ->] (media) -- (browser);
+    
+    % Background grouping
+    \begin{pgfonlayer}{background}
+        \node[group, fit=(tank) (radar) (lora-tx), label=below:Hardware Layer] (hw-group) {};
+        \node[group, fit=(broker) (visual) (media) (streamer), label=above:Cloud Services] (cloud-group) {};
+    \end{pgfonlayer}
+
+\end{tikzpicture}
+
+\end{document}
