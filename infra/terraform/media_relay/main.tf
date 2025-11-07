@@ -141,9 +141,7 @@ output "instance_id" {
 
 output "elastic_ip" {
   description = "Elastic IP address associated with the relay"
-  value = var.existing_eip_allocation_id != null
-    ? data.aws_eip.existing[0].public_ip
-    : aws_eip.mediamtx[0].public_ip
+  value       = var.existing_eip_allocation_id != null ? data.aws_eip.existing[0].public_ip : aws_eip.mediamtx[0].public_ip
 }
 
 output "public_dns" {
