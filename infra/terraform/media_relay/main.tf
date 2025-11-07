@@ -84,7 +84,7 @@ locals {
 }
 
 resource "aws_security_group" "mediamtx" {
-  name        = "${var.name}-sg"
+  name_prefix = "${var.name}-sg-"
   description = "Network rules for the Mediamtx relay"
   vpc_id      = local.vpc_id
 
