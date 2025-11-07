@@ -22,8 +22,11 @@ locals {
   vpc_id = var.vpc_id != null ? var.vpc_id : data.aws_vpc.default[0].id
 }
 
-data "aws_subnet_ids" "selected" {
-  vpc_id = local.vpc_id
+data "aws_subnets" "selected" {
+  filter {
+    name   = "vpc-id"
+    values = [local.vpc_id]
+  }
 }
 
 data "aws_eip" "existing" {
@@ -32,7 +35,7 @@ data "aws_eip" "existing" {
 }
 
 locals {
-  subnet_id = var.subnet_id != null ? var.subnet_id : data.aws_subnet_ids.selected.ids[0]
+  subnet_id = var.subnet_id != null ? var.subnet_id : data.aws_subnets.selected.ids[0]
   tcp_ports = [8554, 1935, 8888, 8889, 9998, 9999]
   udp_ports = [8200]
   port_rules = concat(
