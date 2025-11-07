@@ -14,18 +14,28 @@ The streamer is configured through environment variables (values shown with defa
 
 | Variable | Description |
 | --- | --- |
-| `FFMPEG_BINARY=ffmpeg` | Path to the `ffmpeg` executable (set to `/usr/local/bin/ffmpeg` when using a custom build) |
+| `FFMPEG_BINARY=ffmpeg` | Path to the `ffmpeg` executable |
 | `CAMERA_DEVICE=/dev/video0` | Video4Linux device supplying the camera feed |
 | `AUDIO_DEVICE` | Optional ALSA device (e.g. `hw:1,0`) to include audio |
 | `INPUT_FORMAT` | Force a V4L2 input format (e.g. `mjpeg`, `yuyv422`) when autodetect fails |
 | `FRAME_RATE=30` | Capture frame rate |
 | `VIDEO_SIZE=1280x720` | Capture resolution |
-| `VIDEO_BITRATE=1500k` | Target video bitrate |
+| `VIDEO_BITRATE=2M` | Target average video bitrate |
+| `VIDEO_MAXRATE=2M` | Peak video bitrate (CBR-style when set equal to `VIDEO_BITRATE`) |
+| `VIDEO_BUFSIZE=2M` | Encoder buffer size |
+| `VIDEO_CODEC=h264_rkmpp` | Video encoder (Rockchip hardware encoder by default) |
+| `VIDEO_FORMAT=nv12` | Pixel format fed into the encoder |
 | `STREAM_NAME=robot` | Path name on the relay |
-| `RELAY_HOST=rtsp.nene.02labs.me:8554` | Relay host (host:port) |
+| `RELAY_HOST=rtsp.02labs.me:8554` | Relay host (host:port) |
 | `RELAY_PUBLISH_USER` | Username for RTSP publish authentication |
 | `RELAY_PUBLISH_PASS` | Password for RTSP publish authentication |
 | `RTSP_TRANSPORT=tcp` | Transport to use when pushing (`tcp` or `udp`) |
+| `AUDIO_BITRATE=128k` | Audio bitrate when audio is enabled |
+| `AUDIO_SAMPLE_RATE=48000` | Audio sampling rate |
+| `AUDIO_CHANNELS=2` | Number of audio channels |
+| `GENERATE_SINE_AUDIO=true` | Generate a synthetic sine wave when no audio device is supplied |
+| `SINE_FREQUENCY=1000` | Frequency (Hz) of the synthetic sine tone |
+| `USE_TEST_PATTERN=false` | When `true`, push a `testsrc` pattern instead of the camera |
 
 ## Building
 
@@ -78,5 +88,7 @@ The service will restart automatically if `ffmpeg` exits and will reconnect afte
 
 ## Hardware acceleration tips
 
-- For Rockchip hardware encoding, install an `ffmpeg` build compiled with `--enable-rkmpp` or the V4L2 request API and set `FFMPEG_BINARY=/usr/local/bin/ffmpeg` (or whichever path hosts your accelerated binary).
-- Update the streamer source if you need to switch codecs (for example, replace `libx264` with `h264_rkmpp`). After editing, rebuild the binary with `go build`.
+- The default pipeline now matches the Rockchip GPU sweet spot: 1280x720 @30 fps, NV12 frames, and `h264_rkmpp` with 2 Mbps CBR.
+- Ensure the SBC is running an `ffmpeg` build compiled with `--enable-rkmpp` (the provided Radxa builds usually ship this; the custom binary you installed is assumed to replace `ffmpeg`).
+- Adjust the `VIDEO_*` variables if you need different bitrates or resolutions, but keep an eye on encoder limits.
+- Set `USE_TEST_PATTERN=true` to emit the synthetic `testsrc` pattern while commissioning the pipeline.
