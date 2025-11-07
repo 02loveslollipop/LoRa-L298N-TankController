@@ -1,0 +1,39 @@
+# Mediamtx configuration for the low-latency relay
+logLevel: info
+
+rtsp:
+  listenAddress: :8554
+
+rtmp:
+  listenAddress: :1935
+
+hls:
+  enabled: true
+  listenAddress: :8888
+  segmentDuration: 1s
+  partDuration: 200ms
+
+webrtc:
+  enabled: true
+  listenAddress: :8889
+  candidates: [{type: "server", host: 0.0.0.0, portRange: [8200, 8299]}]
+  iceServers:
+    - url: stun:stun.l.google.com:19302
+
+metrics:
+  enabled: true
+  listenAddress: :9998
+
+pprof:
+  enabled: true
+  listenAddress: :9999
+
+paths:
+  robot:
+    # Publisher credentials supplied via environment variables at runtime
+    publishUser: '{{ env "RELAY_PUBLISH_USER" }}'
+    publishPass: '{{ env "RELAY_PUBLISH_PASS" }}'
+    # Viewer credentials (optional) supplied via environment variables
+    readUser: '{{ env "RELAY_VIEWER_USER" }}'
+    readPass: '{{ env "RELAY_VIEWER_PASS" }}'
+    overridePublisher: yes

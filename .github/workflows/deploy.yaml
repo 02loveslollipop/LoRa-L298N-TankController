@@ -29,6 +29,10 @@ jobs:
             path: visual_controller
             application: "visual-controller"
             environment: "Visual-controller-env"
+          - service: media-relay
+            path: media_relay
+            application: "media-relay"
+            environment: "Media-relay-env"
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
