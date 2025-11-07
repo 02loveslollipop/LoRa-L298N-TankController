@@ -14,7 +14,7 @@ The streamer is configured through environment variables (values shown with defa
 
 | Variable | Description |
 | --- | --- |
-| `FFMPEG_BINARY=ffmpeg` | Path to the `ffmpeg` executable |
+| `FFMPEG_BINARY=ffmpeg` | Path to the `ffmpeg` executable (set to `/usr/local/bin/ffmpeg` when using a custom build) |
 | `CAMERA_DEVICE=/dev/video0` | Video4Linux device supplying the camera feed |
 | `AUDIO_DEVICE` | Optional ALSA device (e.g. `hw:1,0`) to include audio |
 | `INPUT_FORMAT` | Force a V4L2 input format (e.g. `mjpeg`, `yuyv422`) when autodetect fails |
@@ -75,3 +75,8 @@ Copy the resulting `streamer` binary to the Radxa.
    ```
 
 The service will restart automatically if `ffmpeg` exits and will reconnect after transient network failures.
+
+## Hardware acceleration tips
+
+- For Rockchip hardware encoding, install an `ffmpeg` build compiled with `--enable-rkmpp` or the V4L2 request API and set `FFMPEG_BINARY=/usr/local/bin/ffmpeg` (or whichever path hosts your accelerated binary).
+- Update the streamer source if you need to switch codecs (for example, replace `libx264` with `h264_rkmpp`). After editing, rebuild the binary with `go build`.
