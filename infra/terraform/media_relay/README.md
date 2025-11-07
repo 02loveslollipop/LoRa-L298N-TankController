@@ -11,6 +11,7 @@ This module provisions everything required to host the relay on a single EC2 ins
 - Optional Caddy reverse proxy that fetches Let's Encrypt certificates for the supplied domain and fronts the Mediamtx HTTP/WebRTC endpoints.
 - Elastic IP associated with the instance for a stable ingress point.
 	- If you supply `existing_eip_allocation_id`, the module reuses that Elastic IP instead of allocating a new one.
+	- The GitHub Actions workflow destroys the EC2 instance (and its EIP association) prior to each redeploy. Without an `existing_eip_allocation_id`, a fresh Elastic IP is allocated on every run.
 
 You can optionally set `vpc_id`, `subnet_id`, or `key_name` to place the instance in a specific network or enable SSH access.
 

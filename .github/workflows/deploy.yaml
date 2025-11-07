@@ -138,6 +138,16 @@ jobs:
         run: |
           terraform init -input=false
 
+      - name: Terraform destroy existing instance
+        if: ${{ matrix.deployer == 'terraform' }}
+        working-directory: ${{ matrix.path }}
+        shell: bash
+        env:
+          TF_IN_AUTOMATION: 1
+        run: |
+          terraform destroy -input=false -auto-approve -target=aws_instance.mediamtx || true
+          terraform destroy -input=false -auto-approve -target=aws_eip_association.mediamtx || true
+
       - name: Terraform apply
         if: ${{ matrix.deployer == 'terraform' }}
         working-directory: ${{ matrix.path }}
