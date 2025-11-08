@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  mediamtx:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: media_relay_test
+    environment:
+      # Publisher credentials (used by sbc_streamer to push video)
+      - RELAY_PUBLISH_USER=${RELAY_PUBLISH_USER:-publisher}
+      - RELAY_PUBLISH_PASS=${RELAY_PUBLISH_PASS:-publishpass123}
+      # Viewer credentials (used by frontend to watch video)
+      # Set RELAY_VIEWER_USER=any for anonymous access
+      - RELAY_VIEWER_USER=${RELAY_VIEWER_USER:-viewer}
+      - RELAY_VIEWER_PASS=${RELAY_VIEWER_PASS:-viewerpass123}
+    ports:
+      # RTSP ingest from SBC
+      - "8554:8554"
+      # RTMP ingest (alternative)
+      - "1935:1935"
+      # HTTP server (HLS playback and API)
+      - "8888:8888"
+      # WebRTC signalling
+      - "8889:8889"
+      # WebRTC media (UDP)
+      - "8200:8200/udp"
+      # Prometheus metrics
+      - "9998:9998"
+      # pprof debugging
+      - "9999:9999"
+    restart: unless-stopped
+    networks:
+      - media_relay_net
+
+networks:
+  media_relay_net:
+    driver: bridge
