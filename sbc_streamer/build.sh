@@ -7,7 +7,8 @@ if [ "$(uname -m)" != "aarch64" ]; then
     export GOOS=linux
 fi
 
-go build -o streamer main.go -trimpath 
+# run with flags to minimize binary size
+CGO_ENABLED=0 go build -ldflags="-s -w" -o streamer main
 
 if [ $? -ne 0 ]; then
     echo "Build failed"
