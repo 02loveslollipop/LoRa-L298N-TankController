@@ -8,7 +8,7 @@ if [ "$(uname -m)" != "aarch64" ]; then
 fi
 
 # run with flags to minimize binary size
-CGO_ENABLED=0 go build -ldflags="-s -w" -o streamer main
+CGO_ENABLED=0 go build -ldflags="-s -w" -o streamer main.go
 
 if [ $? -ne 0 ]; then
     echo "Build failed"

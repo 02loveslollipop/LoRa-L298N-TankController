@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
+	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -23,6 +24,7 @@ type streamerConfig struct {
 	videoBufSize      string
 	videoCodec        string
 	videoFormat       string
+	videoRotation     int
 	streamName        string
 	targetHost        string
 	publishUser       string
@@ -72,6 +74,7 @@ func main() {
 
 func loadConfig() streamerConfig {
 	baseBitrate := readEnv("VIDEO_BITRATE", "2M")
+	rotation := parseRotation(os.Getenv("VIDEO_ROTATION"))
 	return streamerConfig{
 		ffmpegBinary:      readEnv("FFMPEG_BINARY", "ffmpeg"),
 		cameraDevice:      readEnv("CAMERA_DEVICE", "/dev/video0"),
@@ -83,6 +86,7 @@ func loadConfig() streamerConfig {
 		videoBufSize:      readEnv("VIDEO_BUFSIZE", baseBitrate),
 		videoCodec:        readEnv("VIDEO_CODEC", "h264_rkmpp"),
 		videoFormat:       readEnv("VIDEO_FORMAT", "nv12"),
+		videoRotation:     rotation,
 		streamName:        readEnv("STREAM_NAME", "robot"),
 		targetHost:        readEnv("RELAY_HOST", "rtsp.nene.02labs.me:8554"),
 		publishUser:       readEnv("RELAY_PUBLISH_USER", ""),
@@ -147,8 +151,9 @@ func buildFFmpegArgs(cfg streamerConfig) []string {
 		)
 	}
 
+	filters := buildVideoFilters(cfg)
 	args = append(args,
-		"-vf", fmt.Sprintf("format=%s", cfg.videoFormat),
+		"-vf", strings.Join(filters, ","),
 		"-c:v", cfg.videoCodec,
 		"-b:v", cfg.videoBitrate,
 		"-maxrate", cfg.videoMaxRate,
@@ -207,4 +212,39 @@ func readEnvBool(key string, fallback bool) bool {
 	default:
 		return fallback
 	}
+}
+
+func parseRotation(value string) int {
+	if value == "" {
+		return 0
+	}
+	deg, err := strconv.Atoi(value)
+	if err != nil {
+		log.Printf("invalid VIDEO_ROTATION %q: %v", value, err)
+		return 0
+	}
+	deg = ((deg % 360) + 360) % 360
+	switch deg {
+	case 0:
+		return 0
+	case 90, 180, 270:
+		return deg
+	default:
+		log.Printf("unsupported VIDEO_ROTATION %d; allowed values are 90, 180, 270", deg)
+		return 0
+	}
+}
+
+func buildVideoFilters(cfg streamerConfig) []string {
+	var filters []string
+	switch cfg.videoRotation {
+	case 90:
+		filters = append(filters, "transpose=1")
+	case 180:
+		filters = append(filters, "transpose=1", "transpose=1")
+	case 270:
+		filters = append(filters, "transpose=2")
+	}
+	filters = append(filters, fmt.Sprintf("format=%s", cfg.videoFormat))
+	return filters
 }
