@@ -14,8 +14,8 @@ The streamer is configured through environment variables (values shown with defa
 
 | Variable | Description |
 | --- | --- |
-| `FFMPEG_BINARY=ffmpeg` | Path to the hardware-accelerated ffmpeg wrapper/binary |
-| `FFMPEG_CPU_BINARY=ffmpeg` | Path to the software encoder ffmpeg when using `cpu_streamer` |
+| `FFMPEG_BINARY=ffmpeg` | Path to the hardware-accelerated ffmpeg wrapper/binary (default build) |
+| `FFMPEG_CPU_BINARY=ffmpeg` | Path to the software encoder ffmpeg when building with the `cpu` tag |
 | `CAMERA_DEVICE=/dev/video0` | Video4Linux device supplying the camera feed |
 | `AUDIO_DEVICE` | Optional ALSA device (e.g. `hw:1,0`) to include audio |
 | `INPUT_FORMAT` | Force a V4L2 input format (e.g. `mjpeg`, `yuyv422`) when autodetect fails |
@@ -52,10 +52,10 @@ The streamer is configured through environment variables (values shown with defa
 ```powershell
 # on the SBC or a build machine
 cd sbc_streamer
-# Hardware-accelerated build
-go build -o streamer main.go
+# Hardware-accelerated build (default)
+go build -o streamer
 # Optional CPU-only build for testing
-go build -o cpu_streamer cpu.go
+go build -tags cpu -o cpu_streamer
 ```
 
 Copy the desired binary to the Radxa.

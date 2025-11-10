@@ -1,3 +1,6 @@
+//go:build cpu
+// +build cpu
+
 package main
 
 import (
@@ -158,13 +161,56 @@ func buildCPUFFmpegArgs(cfg cpuStreamerConfig) []string {
 	args = append(args,
 		"-rtsp_transport", cfg.rtspTransport,
 		"-f", "rtsp",
-		buildRTSPURL(streamerConfig{
-			targetHost:  cfg.targetHost,
-			publishUser: cfg.publishUser,
-			publishPass: cfg.publishPass,
-			streamName:  cfg.streamName,
-		}),
+		buildCPURTSPURL(cfg),
 	)
 
 	return args
+}
+
+func buildCPURTSPURL(cfg cpuStreamerConfig) string {
+	var auth string
+	if cfg.publishUser != "" {
+		auth = cfg.publishUser
+		if cfg.publishPass != "" {
+			auth = fmt.Sprintf("%s:%s", cfg.publishUser, cfg.publishPass)
+		}
+	}
+	if auth != "" {
+		auth += "@"
+	}
+	return fmt.Sprintf("rtsp://%s%s/%s", auth, cfg.targetHost, cfg.streamName)
+}
+
+func readEnv(key, fallback string) string {
+	if v, ok := os.LookupEnv(key); ok && v != "" {
+		return v
+	}
+	return fallback
+}
+
+func readEnvBool(key string, fallback bool) bool {
+	v, ok := os.LookupEnv(key)
+	if !ok || v == "" {
+		return fallback
+	}
+	switch strings.ToLower(v) {
+	case "1", "true", "t", "yes", "y":
+		return true
+	case "0", "false", "f", "no", "n":
+		return false
+	default:
+		return fallback
+	}
+}
+
+func parsePositiveInt(value string, fallback int) int {
+	if value == "" {
+		return fallback
+	}
+	v, err := strconv.Atoi(value)
+	if err != nil || v <= 0 {
+		log.Printf("invalid positive int %q, using fallback %d", value, fallback)
+		return fallback
+	}
+	return v
 }

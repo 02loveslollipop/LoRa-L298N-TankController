@@ -1,3 +1,6 @@
+//go:build !cpu
+// +build !cpu
+
 package main
 
 import (

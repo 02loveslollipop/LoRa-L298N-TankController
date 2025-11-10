@@ -1,20 +1,30 @@
 #!/bin/bash
+set -euo pipefail
 
-#check if current system is aarch64
-if [ "$(uname -m)" != "aarch64" ]; then
-    # add flags for go build cross compile
+TARGET="cpu_streamer"
+BUILD_TAGS="cpu"
+OUTPUT_MSG="Built CPU-only streamer (libx264)"
+OTHER_HINT="--hw-accel"
+
+if [[ ${1-} == "--hw-accel" ]]; then
+    TARGET="streamer"
+    BUILD_TAGS=""
+    OUTPUT_MSG="Built hardware-accelerated streamer (rkmpp)"
+    OTHER_HINT="(no flag)"
+fi
+
+if [[ "$(uname -m)" != "aarch64" ]]; then
     export GOARCH=arm64
     export GOOS=linux
 fi
 
-# run with flags to minimize binary size
-CGO_ENABLED=0 go build -ldflags="-s -w" -o streamer main.go
-
-if [ $? -ne 0 ]; then
-    echo "Build failed"
-    exit 1
+GOFLAGS=(-ldflags "-s -w")
+if [[ -n "$BUILD_TAGS" ]]; then
+    GOFLAGS=(-tags "$BUILD_TAGS" "${GOFLAGS[@]}")
 fi
 
-echo "Build succeeded"
-echo "You can run the streamer using ./run.sh"
-exit 0
+CGO_ENABLED=0 go build "${GOFLAGS[@]}" -o "$TARGET"
+
+echo "$OUTPUT_MSG"
+echo "Binary: $TARGET"
+echo "To build the other variant, rerun with $OTHER_HINT."
