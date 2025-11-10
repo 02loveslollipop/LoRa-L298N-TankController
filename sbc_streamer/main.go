@@ -18,6 +18,7 @@ type streamerConfig struct {
 	cameraDevice      string
 	audioDevice       string
 	frameRate         string
+	frameRateInt      int
 	resolution        string
 	videoBitrate      string
 	videoMaxRate      string
@@ -25,6 +26,18 @@ type streamerConfig struct {
 	videoCodec        string
 	videoFormat       string
 	videoRotation     int
+	gopSize           int
+	keyintMin         int
+	bFrames           int
+	rcMode            string
+	qpInit            string
+	qpMin             string
+	qpMax             string
+	qpMinI            string
+	qpMaxI            string
+	refreshMode       string
+	refreshNum        int
+	useIntraRefresh   bool
 	streamName        string
 	targetHost        string
 	publishUser       string
@@ -74,12 +87,22 @@ func main() {
 
 func loadConfig() streamerConfig {
 	baseBitrate := readEnv("VIDEO_BITRATE", "2M")
+	frameRate := readEnv("FRAME_RATE", "30")
+	frameRateInt := parsePositiveInt(frameRate, 30)
+	gopSize := parsePositiveInt(os.Getenv("GOP_SIZE"), frameRateInt)
+	keyintMin := parsePositiveInt(os.Getenv("KEYINT_MIN"), gopSize)
+	bFrames := parseNonNegativeInt(os.Getenv("B_FRAMES"), 0)
+	rcMode := strings.ToUpper(readEnv("RC_MODE", "CBR"))
 	rotation := parseRotation(os.Getenv("VIDEO_ROTATION"))
+	refreshMode := strings.ToLower(readEnv("REFRESH_MODE", ""))
+	refreshNum := parsePositiveInt(os.Getenv("REFRESH_NUM"), 1)
+	useIntraRefresh := readEnvBool("INTRA_REFRESH", true)
 	return streamerConfig{
 		ffmpegBinary:      readEnv("FFMPEG_BINARY", "ffmpeg"),
 		cameraDevice:      readEnv("CAMERA_DEVICE", "/dev/video0"),
 		audioDevice:       os.Getenv("AUDIO_DEVICE"),
-		frameRate:         readEnv("FRAME_RATE", "30"),
+		frameRate:         frameRate,
+		frameRateInt:      frameRateInt,
 		resolution:        readEnv("VIDEO_SIZE", "1280x720"),
 		videoBitrate:      baseBitrate,
 		videoMaxRate:      readEnv("VIDEO_MAXRATE", baseBitrate),
@@ -87,6 +110,18 @@ func loadConfig() streamerConfig {
 		videoCodec:        readEnv("VIDEO_CODEC", "h264_rkmpp"),
 		videoFormat:       readEnv("VIDEO_FORMAT", "nv12"),
 		videoRotation:     rotation,
+		gopSize:           gopSize,
+		keyintMin:         keyintMin,
+		bFrames:           bFrames,
+		rcMode:            rcMode,
+		qpInit:            os.Getenv("QP_INIT"),
+		qpMin:             os.Getenv("QP_MIN"),
+		qpMax:             os.Getenv("QP_MAX"),
+		qpMinI:            os.Getenv("QP_MIN_I"),
+		qpMaxI:            os.Getenv("QP_MAX_I"),
+		refreshMode:       refreshMode,
+		refreshNum:        refreshNum,
+		useIntraRefresh:   useIntraRefresh,
 		streamName:        readEnv("STREAM_NAME", "robot"),
 		targetHost:        readEnv("RELAY_HOST", "rtsp.nene.02labs.me:8554"),
 		publishUser:       readEnv("RELAY_PUBLISH_USER", ""),
@@ -159,6 +194,41 @@ func buildFFmpegArgs(cfg streamerConfig) []string {
 		"-maxrate", cfg.videoMaxRate,
 		"-bufsize", cfg.videoBufSize,
 	)
+
+	if cfg.gopSize > 0 {
+		args = append(args, "-g", strconv.Itoa(cfg.gopSize))
+	}
+	if cfg.keyintMin > 0 {
+		args = append(args, "-keyint_min", strconv.Itoa(cfg.keyintMin))
+	}
+	args = append(args, "-bf", strconv.Itoa(cfg.bFrames))
+	if cfg.rcMode != "" {
+		args = append(args, "-rc_mode", cfg.rcMode)
+	}
+	if cfg.qpInit != "" {
+		args = append(args, "-qp_init", cfg.qpInit)
+	}
+	if cfg.qpMin != "" {
+		args = append(args, "-qp_min", cfg.qpMin)
+	}
+	if cfg.qpMax != "" {
+		args = append(args, "-qp_max", cfg.qpMax)
+	}
+	if cfg.qpMinI != "" {
+		args = append(args, "-qp_min_i", cfg.qpMinI)
+	}
+	if cfg.qpMaxI != "" {
+		args = append(args, "-qp_max_i", cfg.qpMaxI)
+	}
+	if cfg.useIntraRefresh {
+		args = append(args, "-intra_refresh", "true")
+		if cfg.refreshMode != "" {
+			args = append(args, "-refresh_mode", cfg.refreshMode)
+		}
+		if cfg.refreshNum > 0 {
+			args = append(args, "-refresh_num", strconv.Itoa(cfg.refreshNum))
+		}
+	}
 
 	if cfg.audioDevice != "" || cfg.generateSineAudio {
 		args = append(args,
@@ -247,4 +317,28 @@ func buildVideoFilters(cfg streamerConfig) []string {
 	}
 	filters = append(filters, fmt.Sprintf("format=%s", cfg.videoFormat))
 	return filters
+}
+
+func parsePositiveInt(value string, fallback int) int {
+	if value == "" {
+		return fallback
+	}
+	v, err := strconv.Atoi(value)
+	if err != nil || v <= 0 {
+		log.Printf("invalid positive int %q, using fallback %d", value, fallback)
+		return fallback
+	}
+	return v
+}
+
+func parseNonNegativeInt(value string, fallback int) int {
+	if value == "" {
+		return fallback
+	}
+	v, err := strconv.Atoi(value)
+	if err != nil || v < 0 {
+		log.Printf("invalid non-negative int %q, using fallback %d", value, fallback)
+		return fallback
+	}
+	return v
 }

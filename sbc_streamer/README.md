@@ -26,6 +26,14 @@ The streamer is configured through environment variables (values shown with defa
 | `VIDEO_CODEC=h264_rkmpp` | Video encoder (Rockchip hardware encoder by default) |
 | `VIDEO_FORMAT=nv12` | Pixel format fed into the encoder |
 | `VIDEO_ROTATION` | Optional rotation in degrees (90, 180, or 270) applied before encoding |
+| `RC_MODE=CBR` | Rate control mode for the hardware encoder (`CBR`, `VBR`, `CQP`, etc.) |
+| `GOP_SIZE=FRAME_RATE` | Keyframe interval; defaults to the capture frame rate to minimize latency |
+| `KEYINT_MIN=GOP_SIZE` | Minimum distance between keyframes |
+| `B_FRAMES=0` | Number of B-frames (keep at 0 for lowest latency) |
+| `INTRA_REFRESH=true` | Enable cyclic intra refresh to avoid long GOP stalls |
+| `REFRESH_MODE=row` | Intra refresh mode (`row` or `col`) when refresh is enabled |
+| `REFRESH_NUM=1` | Macroblock rows/columns refreshed per frame |
+| `QP_INIT` / `QP_MIN` / `QP_MAX` / `QP_MIN_I` / `QP_MAX_I` | Optional QP clamps for fine-grained quality control |
 | `STREAM_NAME=robot` | Path name on the relay |
 | `RELAY_HOST=rtsp.02labs.me:8554` | Relay host (host:port) |
 | `RELAY_PUBLISH_USER` | Username for RTSP publish authentication |
