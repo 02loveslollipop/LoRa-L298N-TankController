@@ -1,13 +1,12 @@
 #!/bin/bash
 set -euo pipefail
 
-TARGET="cpu_streamer"
+TARGET="streamer"
 BUILD_TAGS="cpu"
 OUTPUT_MSG="Built CPU-only streamer (libx264)"
 OTHER_HINT="--hw-accel"
 
 if [[ ${1-} == "--hw-accel" ]]; then
-    TARGET="streamer"
     BUILD_TAGS=""
     OUTPUT_MSG="Built hardware-accelerated streamer (rkmpp)"
     OTHER_HINT="(no flag)"
