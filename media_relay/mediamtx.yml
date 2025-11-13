@@ -24,6 +24,7 @@ authInternalUsers:
 
 rtsp: yes
 rtspAddress: :8554
+readBufferCount: 64
 
 rtmp: yes
 rtmpAddress: :1935
