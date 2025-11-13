@@ -30,6 +30,10 @@ jobs:
             path: visual_controller
             application: "visual-controller"
             environment: "Visual-controller-env"
+          - service: telemetry-dashboard
+            path: telemetry_dashboard
+            application: "telemetry-dashboard"
+            environment: "Telemetry-dashboard-env"
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
