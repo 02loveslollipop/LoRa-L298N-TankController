@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { resetTank, fetchTanks, TankSnapshot } from "../utils/api";
 import { useTankContext } from "../App";
+import { WhepPlayer } from "../components/webrtc/WhepPlayer";
 import "./Status.css";
 
 interface TankEntry {
@@ -100,6 +101,10 @@ export function StatusPage() {
           );
         })}
       </div>
+      <section className="status-stream">
+        <h2>Live Stream</h2>
+        <WhepPlayer whepUrl={import.meta.env.VITE_WHEP_URL ?? "https://rtsp.nene.02labs.me/whep?path=robot"} />
+      </section>
     </div>
   );
 }
