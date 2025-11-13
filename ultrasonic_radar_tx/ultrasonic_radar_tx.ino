@@ -9,6 +9,7 @@
 #error "This sketch requires an ESP8266 or ESP32 board."
 #endif
 
+#include <Wire.h>
 #include <ArduinoWebsockets.h>
 
 using namespace websockets;
@@ -34,6 +35,15 @@ constexpr uint32_t SERVO_SETTLE_MS = 30;
 constexpr uint32_t SAMPLE_PERIOD_MS = 60;
 constexpr float MAX_DISTANCE_CM = 300.0f;
 constexpr unsigned long PULSE_TIMEOUT_US = 25000;
+
+#if defined(ESP32)
+constexpr uint8_t HDC1080_SDA_PIN = 4;
+constexpr uint8_t HDC1080_SCL_PIN = 23;
+#endif
+// Texas Instruments HDC1080 humidity/temp sensor (I2C)
+constexpr uint8_t HDC1080_ADDR = 0x40;
+constexpr unsigned long ENV_SAMPLE_PERIOD_MS = 2000;
+constexpr unsigned long HDC1080_MEAS_DELAY_MS = 20;
 
 // Wi-Fi and radar broker configuration
 const char* WIFI_SSID = "UPBWiFi";
@@ -63,6 +73,12 @@ unsigned long lastStepMs = 0;
 unsigned long lastWifiAttempt = 0;
 unsigned long lastWsAttempt = 0;
 
+bool envSensorInitialized = false;
+bool envSensorHasSample = false;
+float envLastTemperatureC = 0.0f;
+float envLastHumidityPct = 0.0f;
+unsigned long envLastSampleMs = 0;
+
 #if defined(ESP32)
 HardwareSerial SerialGPS(1);
 TinyGPSPlus gps;
@@ -89,6 +105,10 @@ void publishRadarSample(int angleDeg, float distanceCm, bool valid);
 float readDistanceCm();
 void commandServo(int logicalAngle);
 void updateSweep();
+void beginEnvSensor();
+void updateEnvSensor();
+bool readHdc1080Sample(float& temperatureC, float& humidityPct);
+bool readHdc1080Register(uint8_t reg, uint16_t& value);
 
 void setup() {
   Serial.begin(115200);
@@ -111,6 +131,7 @@ void setup() {
   beginGps();
 #endif
 
+  beginEnvSensor();
   connectToWifi();
 
   radarSocket.onEvent([](WebsocketsEvent event, String data) {
@@ -144,6 +165,7 @@ void loop() {
     radarSocket.poll();
   }
 
+  updateEnvSensor();
   updateSweep();
 }
 
@@ -212,7 +234,7 @@ void publishRadarSample(int angleDeg, float distanceCm, bool valid) {
     return;
   }
   String payload;
-  payload.reserve(160);
+  payload.reserve(220);
   payload += "{\"angle\":";
   payload += angleDeg;
   payload += ",\"distance_cm\":";
@@ -242,6 +264,16 @@ void publishRadarSample(int angleDeg, float distanceCm, bool valid) {
     payload += ",\"gps\":null";
   }
 #endif
+  payload += ",\"environment\":";
+  if (envSensorHasSample) {
+    payload += "{\"temperature_c\":";
+    payload += String(envLastTemperatureC, 2);
+    payload += ",\"humidity_pct\":";
+    payload += String(envLastHumidityPct, 1);
+    payload += "}";
+  } else {
+    payload += "null";
+  }
   payload += "}";
 
   if (!radarSocket.send(payload)) {
@@ -317,6 +349,82 @@ void updateSweep() {
     servoCommandMs = now;
     waitingForServo = true;
   }
+}
+
+void beginEnvSensor() {
+#if defined(ESP32)
+  Wire.begin(HDC1080_SDA_PIN, HDC1080_SCL_PIN);
+#else
+  Wire.begin();
+#endif
+
+  Wire.beginTransmission(HDC1080_ADDR);
+  const bool found = (Wire.endTransmission() == 0);
+  envSensorInitialized = found;
+  if (found) {
+    Serial.println("[HDC1080] Sensor detected");
+  } else {
+    Serial.println("[HDC1080] Sensor not found on I2C");
+  }
+}
+
+void updateEnvSensor() {
+  if (!envSensorInitialized) {
+    return;
+  }
+  const unsigned long now = millis();
+  if (envSensorHasSample && (now - envLastSampleMs) < ENV_SAMPLE_PERIOD_MS) {
+    return;
+  }
+
+  float temperatureC = 0.0f;
+  float humidityPct = 0.0f;
+  if (readHdc1080Sample(temperatureC, humidityPct)) {
+    envLastTemperatureC = temperatureC;
+    envLastHumidityPct = humidityPct;
+    envSensorHasSample = true;
+  } else {
+    Serial.println("[HDC1080] Failed to read sensor");
+  }
+  envLastSampleMs = now;
+}
+
+bool readHdc1080Sample(float& temperatureC, float& humidityPct) {
+  uint16_t rawTemp = 0;
+  uint16_t rawHumidity = 0;
+  if (!readHdc1080Register(0x00, rawTemp)) {
+    return false;
+  }
+  if (!readHdc1080Register(0x01, rawHumidity)) {
+    return false;
+  }
+
+  temperatureC = (static_cast<float>(rawTemp) / 65536.0f) * 165.0f - 40.0f;
+  humidityPct = (static_cast<float>(rawHumidity) / 65536.0f) * 100.0f;
+  humidityPct = constrain(humidityPct, 0.0f, 100.0f);
+  return true;
+}
+
+bool readHdc1080Register(uint8_t reg, uint16_t& value) {
+  Wire.beginTransmission(HDC1080_ADDR);
+  Wire.write(reg);
+  if (Wire.endTransmission() != 0) {
+    return false;
+  }
+
+  delay(HDC1080_MEAS_DELAY_MS);
+
+  if (Wire.requestFrom(HDC1080_ADDR, static_cast<uint8_t>(2)) != 2) {
+    while (Wire.available()) {
+      Wire.read();
+    }
+    return false;
+  }
+
+  const uint8_t msb = Wire.read();
+  const uint8_t lsb = Wire.read();
+  value = (static_cast<uint16_t>(msb) << 8) | lsb;
+  return true;
 }
 
 #if defined(ESP32)
