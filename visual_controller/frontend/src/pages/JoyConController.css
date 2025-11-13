@@ -1,0 +1,89 @@
+.joycon-layout {
+  display: grid;
+  grid-template-columns: minmax(320px, 1.3fr) minmax(320px, 1fr);
+  gap: 1.5rem;
+  min-height: 70vh;
+  position: relative;
+}
+
+.joycon-left,
+.joycon-right {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.joycon-map-card {
+  flex: 1;
+  min-height: 320px;
+}
+
+.joycon-telemetry pre {
+  max-height: 220px;
+  overflow: auto;
+  margin: 0.75rem 0 0;
+}
+
+.joycon-radar {
+  flex: 1;
+  min-height: 320px;
+}
+
+.joycon-status {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.joycon-status-grid {
+  display: grid;
+  gap: 0.35rem;
+  font-size: 0.95rem;
+  color: rgba(226, 232, 240, 0.85);
+}
+
+.joycon-hints ul {
+  margin: 0.6rem 0 0;
+  padding-left: 1.2rem;
+  display: grid;
+  gap: 0.3rem;
+  font-size: 0.95rem;
+}
+
+.joycon-hints small {
+  display: block;
+  margin-top: 0.75rem;
+  color: rgba(148, 163, 184, 0.85);
+}
+
+.joycon-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(2, 6, 23, 0.75);
+  backdrop-filter: blur(14px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1500;
+}
+
+.joycon-modal {
+  max-width: 580px;
+  width: min(90vw, 580px);
+  padding: 2rem;
+  border: 1px solid rgba(59, 130, 246, 0.4);
+}
+
+.joycon-modal ol {
+  margin: 0 0 1rem;
+  padding-left: 1.25rem;
+  display: grid;
+  gap: 0.4rem;
+}
+
+@media (max-width: 1100px) {
+  .joycon-layout {
+    grid-template-columns: 1fr;
+  }
+}
+

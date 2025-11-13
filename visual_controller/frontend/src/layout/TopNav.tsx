@@ -18,6 +18,9 @@ export function TopNav() {
         <NavLink to="/nt" className={({ isActive }) => (isActive ? "active" : "")}>
           NT Controller
         </NavLink>
+        <NavLink to="/joycon" className={({ isActive }) => (isActive ? "active" : "")}>
+          Joy-Con Controller
+        </NavLink>
         <NavLink to="/status" className={({ isActive }) => (isActive ? "active" : "")}>
           Tank Status
         </NavLink>

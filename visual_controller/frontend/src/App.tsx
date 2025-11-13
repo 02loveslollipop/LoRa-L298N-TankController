@@ -3,6 +3,7 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import { TopNav } from "./layout/TopNav";
 import { LegacyControllerPage } from "./pages/LegacyController";
 import { NtControllerPage } from "./pages/NtController";
+import { JoyConControllerPage } from "./pages/JoyConController";
 import { StatusPage } from "./pages/Status";
 import { defaultTankId } from "./utils/constants";
 
@@ -35,6 +36,7 @@ export default function App() {
             <Route path="/" element={<Navigate to="/legacy" replace />} />
             <Route path="/legacy" element={<LegacyControllerPage />} />
             <Route path="/nt" element={<NtControllerPage />} />
+            <Route path="/joycon" element={<JoyConControllerPage />} />
             <Route path="/status" element={<StatusPage />} />
           </Routes>
         </main>
