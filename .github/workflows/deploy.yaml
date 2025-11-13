@@ -1,6 +1,9 @@
 name: Deploy Infrastructure and Services
 
 on:
+  push:
+    branches:
+      - main
   workflow_dispatch:
 
 env:
@@ -8,7 +11,8 @@ env:
   S3_BUCKET: elasticbeanstalk-us-east-1-036027635110
 
 jobs:
-  deploy:
+  deploy_services:
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -18,20 +22,14 @@ jobs:
             path: control_broker
             application: "controll server"
             environment: "Controllserver-env"
-            deployer: elasticbeanstalk
           - service: stream-cleaner
             path: stream_cleaner
             application: "Stream-cleaner"
             environment: "Stream-cleaner-env"
-            deployer: elasticbeanstalk
           - service: visual-controller
             path: visual_controller
             application: "visual-controller"
             environment: "Visual-controller-env"
-            deployer: elasticbeanstalk
-          - service: media-relay
-            path: infra/terraform/media_relay
-            deployer: terraform
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -48,12 +46,6 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
         env:
           AWS_SHARED_CREDENTIALS_FILE: ~/.aws/credentials
-
-      - name: Set up Terraform
-        if: ${{ matrix.deployer == 'terraform' }}
-        uses: hashicorp/setup-terraform@v3
-        with:
-          terraform_version: 1.7.5
 
       - name: Build visual controller frontend
         if: ${{ matrix.service == 'visual-controller' }}
@@ -73,7 +65,6 @@ jobs:
         id: package
         working-directory: ${{ matrix.path }}
         shell: bash
-        if: ${{ matrix.deployer == 'elasticbeanstalk' }}
         run: |
           ZIP_NAME="${{ matrix.service }}-${{ steps.suffix.outputs.value }}.zip"
           shopt -s dotglob
@@ -85,7 +76,6 @@ jobs:
         env:
           ZIP_NAME: ${{ steps.package.outputs.zip-name }}
         shell: bash
-        if: ${{ matrix.deployer == 'elasticbeanstalk' }}
         run: |
           S3_KEY="deployments/${{ matrix.service }}/${ZIP_NAME}"
           aws s3 cp "${ZIP_NAME}" "s3://${{ env.S3_BUCKET }}/${S3_KEY}"
@@ -96,7 +86,6 @@ jobs:
         env:
           VERSION_LABEL: ${{ matrix.service }}-${{ steps.suffix.outputs.value }}
         shell: bash
-        if: ${{ matrix.deployer == 'elasticbeanstalk' }}
         run: |
           aws elasticbeanstalk create-application-version \
             --application-name "${{ matrix.application }}" \
@@ -107,15 +96,40 @@ jobs:
 
       - name: Update Elastic Beanstalk environment
         shell: bash
-        if: ${{ matrix.deployer == 'elasticbeanstalk' }}
         run: |
           aws elasticbeanstalk update-environment \
             --environment-name "${{ matrix.environment }}" \
             --version-label "${{ steps.version.outputs.version-label }}"
 
+  deploy_media_relay:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    env:
+      SERVICE_PATH: infra/terraform/media_relay
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Create AWS credentials file
+        shell: bash
+        run: |
+          mkdir -p ~/.aws
+          echo "${{ secrets.AWS_CREDENTIALS_B64 }}" | base64 -d > ~/.aws/credentials
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ env.AWS_REGION }}
+        env:
+          AWS_SHARED_CREDENTIALS_FILE: ~/.aws/credentials
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.7.5
+
       - name: Write terraform.tfvars from secret
-        if: ${{ matrix.deployer == 'terraform' }}
-        working-directory: ${{ matrix.path }}
+        working-directory: ${{ env.SERVICE_PATH }}
         env:
           TFVARS_B64: ${{ secrets.MEDIA_RELAY_TFVARS_B64 }}
         shell: bash
@@ -127,8 +141,7 @@ jobs:
           echo "$TFVARS_B64" | base64 -d > terraform.tfvars
 
       - name: Terraform init
-        if: ${{ matrix.deployer == 'terraform' }}
-        working-directory: ${{ matrix.path }}
+        working-directory: ${{ env.SERVICE_PATH }}
         shell: bash
         env:
           TF_IN_AUTOMATION: 1
@@ -136,8 +149,7 @@ jobs:
           terraform init -input=false
 
       - name: Terraform destroy existing instance
-        if: ${{ matrix.deployer == 'terraform' }}
-        working-directory: ${{ matrix.path }}
+        working-directory: ${{ env.SERVICE_PATH }}
         shell: bash
         env:
           TF_IN_AUTOMATION: 1
@@ -146,11 +158,9 @@ jobs:
           terraform destroy -input=false -auto-approve -target=aws_eip_association.mediamtx || true
 
       - name: Terraform apply
-        if: ${{ matrix.deployer == 'terraform' }}
-        working-directory: ${{ matrix.path }}
+        working-directory: ${{ env.SERVICE_PATH }}
         shell: bash
         env:
           TF_IN_AUTOMATION: 1
         run: |
           terraform apply -input=false -auto-approve
-
