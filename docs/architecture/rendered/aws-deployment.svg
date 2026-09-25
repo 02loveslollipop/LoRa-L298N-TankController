@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="2880" height="1620" viewBox="0 0 2880 1620" role="img" aria-labelledby="diagram-title diagram-desc">
 <title id="diagram-title">Long-Range IoT Teleoperation System — AWS Deployment Architecture</title>
-<desc id="diagram-desc">AWS deployment view showing Elastic Beanstalk applications, ElastiCache Valkey streams, EC2 MediaMTX with Elastic IP and Security Group, S3 deployment bundles, and GitHub Actions and Terraform delivery paths.</desc>
+<desc id="diagram-desc">AWS Cloud with Elastic Beanstalk applications, ElastiCache Valkey command and status streams, EC2 MediaMTX relay, S3 deployment bundles, and separate runtime and deployment links. External browser, gateway, and Radxa systems are outside AWS.</desc>
 
 <defs>
   <marker id="arrow-blue" viewBox="0 0 20 20" refX="17" refY="10" markerWidth="20" markerHeight="20" orient="auto" markerUnits="userSpaceOnUse"><path d="M 1 2 L 18 10 L 1 18 Z" fill="#2365C7"/></marker>
@@ -9,152 +9,189 @@
   <marker id="arrow-amber" viewBox="0 0 20 20" refX="17" refY="10" markerWidth="20" markerHeight="20" orient="auto" markerUnits="userSpaceOnUse"><path d="M 1 2 L 18 10 L 1 18 Z" fill="#C87720"/></marker>
   <marker id="arrow-deploy" viewBox="0 0 20 20" refX="17" refY="10" markerWidth="20" markerHeight="20" orient="auto" markerUnits="userSpaceOnUse"><path d="M 1 2 L 18 10 L 1 18 Z" fill="#D57C22"/></marker>
 </defs>
-<rect x="0" y="0" width="2880" height="1620" rx="0" fill="#F7F9FC" stroke="none" stroke-width="1"/>
-<rect x="80" y="75" width="12" height="102" rx="6" fill="#C76A21" stroke="none" stroke-width="1"/>
-<text x="112" y="128" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="68" font-weight="800" fill="#14263D">Long-Range IoT Teleoperation System</text>
-<text x="113" y="180" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="34" font-weight="600" fill="#52647A">AWS Deployment Architecture</text>
-<path d="M 2085 116 L 2155 116" fill="none" stroke="#2365C7" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
-<text x="2177" y="125" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="27" font-weight="700" fill="#14263D">Runtime traffic</text>
-<path d="M 2438 116 L 2508 116" fill="none" stroke="#D57C22" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="16 10"/>
-<text x="2530" y="125" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="27" font-weight="700" fill="#14263D">Deployment</text>
-<rect x="80" y="262" width="580" height="1030" rx="28" fill="#FFFFFF" stroke="#D1DDE9" stroke-width="2"/>
-<rect x="108" y="288" width="58" height="54" rx="27.0" fill="#E8F0FC" stroke="#E8F0FC" stroke-width="0"/>
-<text x="137.0" y="324.8" text-anchor="middle" font-family="Lato, DejaVu Sans, sans-serif" font-size="28" font-weight="700" fill="#2365C7">E</text>
-<text x="187" y="327" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="30" font-weight="800" fill="#14263D">EXTERNAL / EDGE</text>
-<path d="M 108 356 L 632 356" fill="none" stroke="#E4EBF3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-<rect x="112" y="406" width="470" height="160" rx="20" fill="#FFFFFF" stroke="#CBD8E6" stroke-width="2"/>
-<rect x="112" y="426" width="8" height="120" rx="4" fill="#2365C7" stroke="none" stroke-width="1"/>
-<text x="141" y="447" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="22" font-weight="800" fill="#2365C7" letter-spacing="1.4">OPERATOR</text>
-<text x="141" y="504" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="36" font-weight="800" fill="#14263D">Browser / Control UI</text>
-<text x="141" y="547" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="26" font-weight="400" fill="#52647A">Commands + live status</text>
-<rect x="112" y="680" width="470" height="160" rx="20" fill="#FFFFFF" stroke="#CBD8E6" stroke-width="2"/>
-<rect x="112" y="700" width="8" height="120" rx="4" fill="#C76A21" stroke="none" stroke-width="1"/>
-<text x="141" y="721" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="22" font-weight="800" fill="#C76A21" letter-spacing="1.4">LOCAL EDGE</text>
-<text x="141" y="778" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="37" font-weight="800" fill="#14263D">LoRa gateway</text>
-<text x="141" y="821" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="26" font-weight="400" fill="#52647A">LilyGO T-Beam / ESP32</text>
-<rect x="112" y="925" width="470" height="160" rx="20" fill="#FFFFFF" stroke="#CBD8E6" stroke-width="2"/>
-<rect x="112" y="945" width="8" height="120" rx="4" fill="#087F8C" stroke="none" stroke-width="1"/>
-<text x="141" y="966" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="22" font-weight="800" fill="#087F8C" letter-spacing="1.4">ON ROBOT</text>
-<text x="141" y="1023" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="37" font-weight="800" fill="#14263D">Radxa Rock 3C</text>
-<text x="141" y="1066" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="26" font-weight="400" fill="#52647A">RTSP camera uplink</text>
-<rect x="112" y="1115" width="470" height="165" rx="20" fill="#FFFFFF" stroke="#CBD8E6" stroke-width="2"/>
-<rect x="112" y="1135" width="8" height="125" rx="4" fill="#087F8C" stroke="none" stroke-width="1"/>
-<text x="141" y="1156" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="22" font-weight="800" fill="#087F8C" letter-spacing="1.4">OPERATOR</text>
-<text x="141" y="1213" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="34" font-weight="800" fill="#14263D">Browser playback</text>
-<text x="141" y="1256" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="26" font-weight="400" fill="#52647A">WebRTC / WHEP</text>
-<rect x="700" y="262" width="2100" height="1260" rx="28" fill="#FFFFFF" stroke="#BFCFDE" stroke-width="3"/>
-<rect x="728" y="288" width="92" height="54" rx="27.0" fill="#FFE9D5" stroke="#FFE9D5" stroke-width="0"/>
-<text x="774.0" y="324.45" text-anchor="middle" font-family="Lato, DejaVu Sans, sans-serif" font-size="27" font-weight="700" fill="#C76A21">AWS</text>
-<text x="841" y="327" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="30" font-weight="800" fill="#14263D">AWS CLOUD</text>
-<text x="2755" y="326" text-anchor="end" font-family="Lato, DejaVu Sans, sans-serif" font-size="25" font-weight="400" fill="#52647A">Runtime resources + deployment artifacts</text>
-<path d="M 728 356 L 2772 356" fill="none" stroke="#E4EBF3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-<rect x="740" y="385" width="1160" height="490" rx="24" fill="#FFF9F3" stroke="#D1DDE9" stroke-width="2"/>
-<rect x="765" y="409" width="62" height="62" rx="14" fill="#C76A21" stroke="none" stroke-width="1"/>
-<text x="796" y="450" text-anchor="middle" font-family="Lato, DejaVu Sans, sans-serif" font-size="25" font-weight="900" fill="#FFFFFF">EB</text>
-<text x="845" y="451" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="34" font-weight="800" fill="#14263D">AWS Elastic Beanstalk</text>
-<rect x="776" y="478" width="506" height="155" rx="20" fill="#FFFFFF" stroke="#CBD8E6" stroke-width="2"/>
-<rect x="776" y="498" width="8" height="115" rx="4" fill="#C76A21" stroke="none" stroke-width="1"/>
-<text x="805" y="519" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="22" font-weight="800" fill="#C76A21" letter-spacing="1.4">APPLICATION</text>
-<text x="805" y="576" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="38" font-weight="800" fill="#14263D">Visual Controller</text>
-<text x="805" y="619" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="26" font-weight="400" fill="#52647A">API + browser WebSocket</text>
-<rect x="1356" y="478" width="506" height="155" rx="20" fill="#FFFFFF" stroke="#CBD8E6" stroke-width="2"/>
-<rect x="1356" y="498" width="8" height="115" rx="4" fill="#C76A21" stroke="none" stroke-width="1"/>
-<text x="1385" y="519" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="22" font-weight="800" fill="#C76A21" letter-spacing="1.4">APPLICATION</text>
-<text x="1385" y="576" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="38" font-weight="800" fill="#14263D">Control Broker</text>
-<text x="1385" y="619" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="26" font-weight="400" fill="#52647A">Commands + gateway WS</text>
-<rect x="776" y="678" width="506" height="155" rx="20" fill="#FFFFFF" stroke="#D7E0EA" stroke-width="2"/>
-<rect x="776" y="698" width="8" height="115" rx="4" fill="#A8B6C7" stroke="none" stroke-width="1"/>
-<text x="805" y="719" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="22" font-weight="800" fill="#A8B6C7" letter-spacing="1.4">SECONDARY SERVICE</text>
-<text x="805" y="776" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="34" font-weight="800" fill="#5C6D80">Stream Cleaner</text>
-<text x="805" y="819" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="26" font-weight="400" fill="#78899B">Stream retention</text>
-<rect x="1356" y="678" width="506" height="155" rx="20" fill="#FFFFFF" stroke="#D7E0EA" stroke-width="2"/>
-<rect x="1356" y="698" width="8" height="115" rx="4" fill="#A8B6C7" stroke="none" stroke-width="1"/>
-<text x="1385" y="719" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="22" font-weight="800" fill="#A8B6C7" letter-spacing="1.4">SECONDARY SERVICE</text>
-<text x="1385" y="776" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="34" font-weight="800" fill="#5C6D80">Telemetry Dashboard</text>
-<text x="1385" y="819" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="26" font-weight="400" fill="#78899B">Monitoring view</text>
-<rect x="1936" y="385" width="826" height="490" rx="24" fill="#FAF7FF" stroke="#D1DDE9" stroke-width="2"/>
-<rect x="1961" y="409" width="62" height="62" rx="14" fill="#7754B8" stroke="none" stroke-width="1"/>
-<text x="1992" y="450" text-anchor="middle" font-family="Lato, DejaVu Sans, sans-serif" font-size="25" font-weight="900" fill="#FFFFFF">V</text>
-<text x="2041" y="451" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="34" font-weight="800" fill="#14263D">Amazon ElastiCache / Valkey</text>
-<rect x="1980" y="500" width="738" height="115" rx="18" fill="#FFFFFF" stroke="#D9CDEC" stroke-width="2"/>
-<text x="2010" y="545" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="23" font-weight="800" fill="#7754B8" letter-spacing="1.1">REDIS STREAM</text>
-<text x="2010" y="589" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="37" font-weight="800" fill="#14263D">tank_commands</text>
-<rect x="1980" y="648" width="738" height="115" rx="18" fill="#FFFFFF" stroke="#D9CDEC" stroke-width="2"/>
-<text x="2010" y="693" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="23" font-weight="800" fill="#7754B8" letter-spacing="1.1">REDIS STREAM</text>
-<text x="2010" y="737" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="37" font-weight="800" fill="#14263D">tank_status</text>
-<text x="1980" y="807" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="23" font-weight="600" fill="#52647A">Commands: Visual Controller → Broker</text>
-<text x="1980" y="839" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="23" font-weight="600" fill="#52647A">Status: Broker → Visual Controller</text>
-<rect x="1550" y="924" width="1212" height="345" rx="24" fill="#FFF9F3" stroke="#D1DDE9" stroke-width="2"/>
-<rect x="1575" y="948" width="62" height="62" rx="14" fill="#C76A21" stroke="none" stroke-width="1"/>
-<text x="1606" y="989" text-anchor="middle" font-family="Lato, DejaVu Sans, sans-serif" font-size="21" font-weight="900" fill="#FFFFFF">EC2</text>
-<text x="1655" y="990" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="34" font-weight="800" fill="#14263D">Amazon EC2 · media relay</text>
-<rect x="1590" y="1012" width="700" height="155" rx="20" fill="#FFFFFF" stroke="#CBD8E6" stroke-width="2"/>
-<rect x="1590" y="1032" width="8" height="115" rx="4" fill="#C76A21" stroke="none" stroke-width="1"/>
-<text x="1619" y="1053" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="22" font-weight="800" fill="#C76A21" letter-spacing="1.4">CONTAINER</text>
-<text x="1619" y="1110" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="40" font-weight="800" fill="#14263D">MediaMTX</text>
-<text x="1619" y="1153" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="26" font-weight="400" fill="#52647A">RTSP ingest · WebRTC / HLS output</text>
-<rect x="2326" y="1012" width="396" height="155" rx="20" fill="#FFFFFF" stroke="#D8BFA5" stroke-width="2" stroke-dasharray="9 8"/>
-<text x="2355" y="1053" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="22" font-weight="800" fill="#C76A21" letter-spacing="1.2">OPTIONAL</text>
-<text x="2355" y="1105" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="36" font-weight="800" fill="#14263D">Caddy / TLS</text>
-<text x="2355" y="1148" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="24" font-weight="400" fill="#52647A">WHEP + HLS HTTP proxy</text>
-<rect x="1592" y="1193" width="364" height="53" rx="26.5" fill="#FFF0DF" stroke="#FFF0DF" stroke-width="0"/>
-<text x="1774.0" y="1228.25" text-anchor="middle" font-family="Lato, DejaVu Sans, sans-serif" font-size="25" font-weight="700" fill="#C76A21">EC2 Security Group</text>
-<rect x="1982" y="1193" width="251" height="53" rx="26.5" fill="#FFF0DF" stroke="#FFF0DF" stroke-width="0"/>
-<text x="2107.5" y="1228.25" text-anchor="middle" font-family="Lato, DejaVu Sans, sans-serif" font-size="25" font-weight="700" fill="#C76A21">Elastic IP</text>
-<text x="108" y="1342" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="24" font-weight="800" fill="#D57C22" letter-spacing="1.0">DELIVERY / IaC</text>
-<rect x="112" y="1350" width="287" height="155" rx="20" fill="#FFFFFF" stroke="#CBD8E6" stroke-width="2"/>
-<rect x="112" y="1370" width="8" height="115" rx="4" fill="#D57C22" stroke="none" stroke-width="1"/>
-<text x="141" y="1391" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="22" font-weight="800" fill="#D57C22" letter-spacing="1.4">CI / CD</text>
-<text x="141" y="1448" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="32" font-weight="800" fill="#14263D">GitHub Actions</text>
-<text x="141" y="1491" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="24" font-weight="400" fill="#52647A">Push + manual jobs</text>
-<rect x="429" y="1350" width="236" height="155" rx="20" fill="#FFFFFF" stroke="#CBD8E6" stroke-width="2"/>
-<rect x="429" y="1370" width="8" height="115" rx="4" fill="#D57C22" stroke="none" stroke-width="1"/>
-<text x="458" y="1391" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="22" font-weight="800" fill="#D57C22" letter-spacing="1.4">MEDIA IaC</text>
-<text x="458" y="1448" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="34" font-weight="800" fill="#14263D">Terraform</text>
-<text x="458" y="1491" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="22" font-weight="400" fill="#52647A">Manual dispatch</text>
-<rect x="780" y="1340" width="510" height="155" rx="24" fill="#FFF8F8" stroke="#D1DDE9" stroke-width="2"/>
-<rect x="805" y="1364" width="62" height="62" rx="14" fill="#C65353" stroke="none" stroke-width="1"/>
-<text x="836" y="1405" text-anchor="middle" font-family="Lato, DejaVu Sans, sans-serif" font-size="25" font-weight="900" fill="#FFFFFF">S3</text>
-<text x="885" y="1406" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="34" font-weight="800" fill="#14263D">Amazon S3</text>
-<text x="810" y="1469" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="26" font-weight="600" fill="#52647A">EB deployment bundles</text>
-<path d="M 399 1432 L 421 1432" fill="none" stroke="#D57C22" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="14 10"/>
-<polygon points="421,1432 403.0,1441.0 403.0,1423.0" fill="#D57C22"/>
-<path d="M 380 1350 L 380 1294 L 990 1294 L 990 1332" fill="none" stroke="#D57C22" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="14 10"/>
-<polygon points="990.0,1332.0 981.0,1314.0 999.0,1314.0" fill="#D57C22"/>
-<path d="M 1015 1340 L 1015 910 L 1035 910 L 1035 875" fill="none" stroke="#D57C22" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="14 10"/>
-<polygon points="1035.0,875.0 1044.0,893.0 1026.0,893.0" fill="#D57C22"/>
-<path d="M 665 1430 L 690 1430 L 690 1503 L 2184 1503 L 2184 1264" fill="none" stroke="#D57C22" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="14 10"/>
-<polygon points="2184.0,1264.0 2193.0,1282.0 2175.0,1282.0" fill="#D57C22"/>
-<rect x="817" y="1250" width="310" height="48" rx="24.0" fill="#FFF0DF" stroke="#FFF0DF" stroke-width="0"/>
-<text x="972.0" y="1282.05" text-anchor="middle" font-family="Lato, DejaVu Sans, sans-serif" font-size="23" font-weight="700" fill="#D57C22">EB bundles / versions</text>
-<rect x="1704" y="1432" width="332" height="48" rx="24.0" fill="#FFF0DF" stroke="#FFF0DF" stroke-width="0"/>
-<text x="1870.0" y="1464.05" text-anchor="middle" font-family="Lato, DejaVu Sans, sans-serif" font-size="23" font-weight="700" fill="#D57C22">Terraform provisions relay</text>
-<path d="M 582 549 L 783 549" fill="none" stroke="#2365C7" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
-<polygon points="783,549 765.0,558.0 765.0,540.0" fill="#2365C7"/>
-<rect x="586" y="572" width="182" height="47" rx="23.5" fill="#E8F0FC" stroke="#E8F0FC" stroke-width="0"/>
-<text x="677.0" y="603.2" text-anchor="middle" font-family="Lato, DejaVu Sans, sans-serif" font-size="22" font-weight="700" fill="#2365C7">HTTPS / REST</text>
-<path d="M 1609 633 L 1609 666 L 610 666 L 610 759 L 575 759" fill="none" stroke="#2365C7" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
-<polygon points="575.0,759.0 593.0,750.0 593.0,768.0" fill="#2365C7"/>
-<rect x="190" y="590" width="316" height="47" rx="23.5" fill="#E6F6F2" stroke="#E6F6F2" stroke-width="0"/>
-<text x="348.0" y="621.2" text-anchor="middle" font-family="Lato, DejaVu Sans, sans-serif" font-size="22" font-weight="700" fill="#139B87">Gateway status · WebSocket</text>
-<path d="M 1035 478 L 1035 466 L 1908 466 L 1908 557 L 1972 557" fill="none" stroke="#2365C7" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
-<polygon points="1972.0,557.0 1954.0,566.0 1954.0,548.0" fill="#2365C7"/>
-<path d="M 1980 591 L 1858 591" fill="none" stroke="#2365C7" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
-<polygon points="1858,591 1876.0,582.0 1876.0,600.0" fill="#2365C7"/>
-<path d="M 350 680 L 350 642 L 1320 642 L 1320 610 L 1363 610" fill="none" stroke="#139B87" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
-<polygon points="1363.0,610.0 1345.0,619.0 1345.0,601.0" fill="#139B87"/>
-<path d="M 1862 615 L 1905 615 L 1905 706 L 1986 706" fill="none" stroke="#139B87" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
-<polygon points="1986.0,706.0 1968.0,715.0 1968.0,697.0" fill="#139B87"/>
-<path d="M 1980 755 L 1900 755" fill="none" stroke="#139B87" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
-<polygon points="1900,755 1918.0,746.0 1918.0,764.0" fill="#139B87"/>
-<path d="M 776 500 L 575 500" fill="none" stroke="#139B87" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
-<polygon points="575,500 593.0,491.0 593.0,509.0" fill="#139B87"/>
-<path d="M 582 1038 L 1598 1089" fill="none" stroke="#087F8C" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
-<polygon points="1598,1089 1579.571431191079,1097.0862755119317 1580.473838305102,1079.1089102600224" fill="#087F8C"/>
-<rect x="930" y="963" width="375" height="50" rx="25.0" fill="#E5F4F3" stroke="#E5F4F3" stroke-width="0"/>
-<text x="1117.5" y="996.4" text-anchor="middle" font-family="Lato, DejaVu Sans, sans-serif" font-size="24" font-weight="700" fill="#087F8C">RTSP / Internet · H.264</text>
-<path d="M 1780 1167 L 1780 1210 L 575 1210" fill="none" stroke="#087F8C" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
-<polygon points="575.0,1210.0 593.0,1201.0 593.0,1219.0" fill="#087F8C"/>
-<rect x="920" y="1138" width="303" height="50" rx="25.0" fill="#E5F4F3" stroke="#E5F4F3" stroke-width="0"/>
-<text x="1071.5" y="1171.75" text-anchor="middle" font-family="Lato, DejaVu Sans, sans-serif" font-size="25" font-weight="700" fill="#087F8C">WebRTC / WHEP</text>
+<rect x="0" y="0" width="2880" height="1620" rx="0" fill="#FFFFFF" stroke="none" stroke-width="1"/>
+<text x="100" y="120" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="66" font-weight="800" fill="#273447">Long-Range IoT Teleoperation System</text>
+<text x="101" y="183" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="38" font-weight="600" fill="#536275">AWS Deployment Architecture</text>
+<path d="M 2050 130 L 2120 130" fill="none" stroke="#8391A0" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="2141" y="140" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="25" font-weight="650" fill="#536275">Runtime</text>
+<path d="M 2325 130 L 2395 130" fill="none" stroke="#8A5CB0" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="11 8"/>
+<text x="2416" y="140" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="25" font-weight="650" fill="#536275">Deployment</text>
+<text x="105" y="318" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="29" font-weight="650" fill="#273447">EXTERNAL / EDGE</text>
+<rect x="255" y="417" width="92" height="69" rx="8" fill="#FFFFFF" stroke="#273447" stroke-width="4"/>
+<path d="M 258 435 L 344 435" fill="none" stroke="#273447" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="268" cy="427" r="3" fill="#273447"/>
+<circle cx="280" cy="427" r="3" fill="#273447"/>
+<circle cx="292" cy="427" r="3" fill="#273447"/>
+<path d="M 283 497 L 319 497" fill="none" stroke="#273447" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="301" y="543" text-anchor="middle" font-family="Lato, DejaVu Sans, sans-serif" font-size="32" font-weight="700" fill="#273447">Browser operator</text>
+<text x="301" y="579" text-anchor="middle" font-family="Lato, DejaVu Sans, sans-serif" font-size="23" font-weight="400" fill="#536275">Control + live status</text>
+<rect x="267" y="706" width="68" height="68" rx="8" fill="#FFFFFF" stroke="#273447" stroke-width="4"/>
+<path d="M 255 724 L 267 724" fill="none" stroke="#273447" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 335 724 L 347 724" fill="none" stroke="#273447" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 255 742 L 267 742" fill="none" stroke="#273447" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 335 742 L 347 742" fill="none" stroke="#273447" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 255 760 L 267 760" fill="none" stroke="#273447" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 335 760 L 347 760" fill="none" stroke="#273447" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="301" cy="740" r="13" fill="none" stroke="#273447" stroke-width="4"/>
+<text x="301" y="825" text-anchor="middle" font-family="Lato, DejaVu Sans, sans-serif" font-size="32" font-weight="700" fill="#273447">LoRa gateway</text>
+<text x="301" y="861" text-anchor="middle" font-family="Lato, DejaVu Sans, sans-serif" font-size="23" font-weight="400" fill="#536275">WebSocket client</text>
+<rect x="267" y="1005" width="68" height="68" rx="8" fill="#FFFFFF" stroke="#273447" stroke-width="4"/>
+<path d="M 255 1023 L 267 1023" fill="none" stroke="#273447" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 335 1023 L 347 1023" fill="none" stroke="#273447" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 255 1041 L 267 1041" fill="none" stroke="#273447" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 335 1041 L 347 1041" fill="none" stroke="#273447" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 255 1059 L 267 1059" fill="none" stroke="#273447" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 335 1059 L 347 1059" fill="none" stroke="#273447" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="301" cy="1039" r="13" fill="none" stroke="#273447" stroke-width="4"/>
+<text x="301" y="1124" text-anchor="middle" font-family="Lato, DejaVu Sans, sans-serif" font-size="32" font-weight="700" fill="#273447">Radxa Rock 3C</text>
+<text x="301" y="1160" text-anchor="middle" font-family="Lato, DejaVu Sans, sans-serif" font-size="23" font-weight="400" fill="#536275">RTSP video uplink</text>
+<rect x="255" y="1171" width="92" height="69" rx="8" fill="#FFFFFF" stroke="#273447" stroke-width="4"/>
+<path d="M 258 1189 L 344 1189" fill="none" stroke="#273447" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="268" cy="1181" r="3" fill="#273447"/>
+<circle cx="280" cy="1181" r="3" fill="#273447"/>
+<circle cx="292" cy="1181" r="3" fill="#273447"/>
+<path d="M 283 1251 L 319 1251" fill="none" stroke="#273447" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="301" y="1297" text-anchor="middle" font-family="Lato, DejaVu Sans, sans-serif" font-size="32" font-weight="700" fill="#273447">Browser playback</text>
+<text x="301" y="1333" text-anchor="middle" font-family="Lato, DejaVu Sans, sans-serif" font-size="23" font-weight="400" fill="#536275">Same operator · WHEP</text>
+<rect x="605" y="260" width="2195" height="1070" rx="0" fill="#FFFFFF" stroke="#8090A2" stroke-width="3"/>
+<g transform="translate(605 260) scale(2.05)">
+
+    <g id="Icon-Architecture-Group/32/AWS-Cloud-logo_32" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <rect id="Rectangle" fill="#242F3E" x="0" y="0" width="40" height="40"></rect>
+        <path d="M32.6982,23.9008 C33.0592,24.3698 32.2982,26.2998 31.9572,27.1638 C31.8532,27.4258 32.0752,27.5288 32.3072,27.3318 C33.8202,26.0478 34.2122,23.3568 33.9012,22.9688 C33.5942,22.5828 30.9502,22.2518 29.3382,23.4008 C29.0892,23.5778 29.1322,23.8218 29.4072,23.7898 C30.3152,23.6778 32.3382,23.4328 32.6982,23.9008 L32.6982,23.9008 Z M31.8562,25.9098 C32.3742,25.5318 31.9302,24.9688 31.4022,25.1898 C27.8892,26.6538 24.0752,27.3628 20.6022,27.3628 C15.4592,27.3628 10.4752,25.9738 6.4462,23.6678 C6.0942,23.4658 5.8332,23.8228 6.1272,24.0818 C9.8602,27.3978 14.7962,29.3908 20.2742,29.3908 C24.1842,29.3908 28.7252,28.1828 31.8562,25.9098 L31.8562,25.9098 Z M29.7122,20.6948 C29.2142,20.6948 28.7272,20.6418 28.2532,20.5338 C27.7772,20.4248 27.4132,20.3018 27.1602,20.1608 C27.0052,20.0768 26.9082,19.9888 26.8692,19.9028 C26.8312,19.8148 26.8112,19.7288 26.8112,19.6428 L26.8112,19.1738 C26.8112,18.9798 26.8842,18.8808 27.0272,18.8808 C27.0822,18.8808 27.1402,18.8938 27.2002,18.9138 C27.2612,18.9368 27.3412,18.9688 27.4412,19.0118 C27.7612,19.1528 28.1082,19.2598 28.4852,19.3358 C28.8612,19.4108 29.2362,19.4488 29.6112,19.4488 C30.2082,19.4488 30.6692,19.3468 30.9952,19.1408 C31.3222,18.9368 31.4842,18.6458 31.4842,18.2678 C31.4842,18.0078 31.3992,17.7928 31.2272,17.6188 C31.0562,17.4448 30.7382,17.2858 30.2752,17.1338 L28.9002,16.7128 C28.2032,16.4968 27.6982,16.1838 27.3832,15.7748 C27.0682,15.3628 26.9112,14.9158 26.9112,14.4278 C26.9112,14.0408 26.9962,13.6988 27.1692,13.4008 C27.3392,13.1038 27.5642,12.8508 27.8452,12.6398 C28.1302,12.4298 28.4592,12.2718 28.8342,12.1618 C29.2082,12.0548 29.6062,11.9998 30.0262,11.9998 C30.2362,11.9998 30.4492,12.0138 30.6662,12.0408 C30.8812,12.0668 31.0852,12.1028 31.2782,12.1458 C31.4712,12.1908 31.6512,12.2388 31.8162,12.2918 C31.9822,12.3468 32.1142,12.4008 32.2152,12.4538 C32.3462,12.5288 32.4392,12.6048 32.4962,12.6808 C32.5512,12.7558 32.5792,12.8578 32.5792,12.9888 L32.5792,13.4248 C32.5792,13.6198 32.5072,13.7158 32.3622,13.7158 C32.2852,13.7158 32.1652,13.6798 31.9982,13.6038 C31.4582,13.3648 30.8482,13.2478 30.1772,13.2478 C29.6352,13.2478 29.2142,13.3338 28.9162,13.5058 C28.6172,13.6798 28.4682,13.9548 28.4682,14.3328 C28.4682,14.5908 28.5622,14.8098 28.7512,14.9878 C28.9392,15.1658 29.2862,15.3358 29.7952,15.4988 L31.1372,15.9208 C31.8222,16.1348 32.3112,16.4328 32.6032,16.8088 C32.8972,17.1878 33.0442,17.6188 33.0442,18.1038 C33.0442,18.5048 32.9612,18.8638 32.7942,19.1818 C32.6282,19.5008 32.3992,19.7718 32.1052,19.9988 C31.8132,20.2258 31.4632,20.3978 31.0542,20.5168 C30.6442,20.6368 30.1972,20.6948 29.7122,20.6948 L29.7122,20.6948 Z M17.5472,20.4508 C17.3812,20.4508 17.2602,20.4238 17.1822,20.3638 C17.1042,20.3028 17.0382,20.1828 16.9832,19.9988 L14.7612,12.8418 C14.7082,12.6578 14.6792,12.5348 14.6792,12.4708 C14.6792,12.3198 14.7572,12.2438 14.9122,12.2438 L15.8392,12.2438 C16.0162,12.2438 16.1402,12.2738 16.2132,12.3338 C16.2842,12.3918 16.3472,12.5118 16.4022,12.6978 L17.9932,18.8178 L19.4702,12.6978 C19.5142,12.5118 19.5742,12.3918 19.6512,12.3338 C19.7282,12.2738 19.8552,12.2438 20.0312,12.2438 L20.7962,12.2438 C20.9712,12.2438 21.0982,12.2738 21.1762,12.3338 C21.2532,12.3918 21.3142,12.5118 21.3582,12.6978 L22.8512,18.8988 L24.4912,12.6978 C24.5462,12.5118 24.6092,12.3918 24.6812,12.3338 C24.7542,12.2738 24.8772,12.2438 25.0542,12.2438 L25.9322,12.2438 C26.0882,12.2438 26.1652,12.3198 26.1652,12.4708 C26.1652,12.5118 26.1582,12.5618 26.1492,12.6148 C26.1362,12.6708 26.1162,12.7458 26.0812,12.8418 L23.7952,19.9988 C23.7402,20.1828 23.6732,20.3028 23.5952,20.3638 C23.5182,20.4238 23.3962,20.4508 23.2312,20.4508 L22.4182,20.4508 C22.2422,20.4508 22.1152,20.4208 22.0382,20.3568 C21.9612,20.2918 21.9002,20.1658 21.8562,19.9838 L20.3802,14.0238 L18.9232,19.9838 C18.8792,20.1658 18.8172,20.2918 18.7402,20.3568 C18.6622,20.4208 18.5362,20.4508 18.3592,20.4508 L17.5472,20.4508 Z M9.9392,19.4488 C10.2502,19.4488 10.5752,19.3918 10.9182,19.2788 C11.2602,19.1648 11.5582,18.9688 11.8122,18.6868 C11.9682,18.5148 12.0742,18.3178 12.1362,18.0958 C12.1962,17.8758 12.2252,17.6088 12.2252,17.2948 L12.2252,16.9068 C11.9512,16.8418 11.6612,16.7908 11.3562,16.7528 C11.0522,16.7158 10.7572,16.6958 10.4692,16.6958 C9.8402,16.6958 9.3692,16.8198 9.0612,17.0688 C8.7522,17.3168 8.5962,17.6718 8.5962,18.1388 C8.5962,18.5698 8.7132,18.8948 8.9452,19.1168 C9.1772,19.3388 9.5092,19.4488 9.9392,19.4488 L9.9392,19.4488 Z M13.7852,18.0408 C13.7852,18.3858 13.8202,18.6598 13.8922,18.8658 C13.9652,19.0718 14.0672,19.2938 14.1992,19.5298 C14.2432,19.6058 14.2652,19.6758 14.2652,19.7388 C14.2652,19.8378 14.2042,19.9298 14.0832,20.0148 L13.4862,20.4048 C13.3982,20.4578 13.3152,20.4858 13.2382,20.4858 C13.1372,20.4858 13.0442,20.4428 12.9562,20.3568 C12.8222,20.2258 12.7102,20.0838 12.6172,19.9268 C12.5212,19.7708 12.4252,19.5878 12.3262,19.3828 C11.5852,20.2358 10.6582,20.6628 9.5422,20.6628 C8.7462,20.6628 8.1162,20.4428 7.6512,19.9988 C7.1882,19.5568 6.9562,18.9628 6.9562,18.2188 C6.9562,17.4318 7.2432,16.7958 7.8192,16.3158 C8.3922,15.8358 9.1672,15.5948 10.1382,15.5948 C10.4592,15.5948 10.7932,15.6198 11.1412,15.6678 C11.4882,15.7158 11.8512,15.7848 12.2252,15.8708 L12.2252,15.1918 C12.2252,14.4898 12.0782,13.9958 11.7792,13.7088 C11.4812,13.4228 10.9682,13.2808 10.2392,13.2808 C9.9062,13.2808 9.5662,13.3198 9.2182,13.4008 C8.8712,13.4818 8.5302,13.5868 8.1992,13.7158 C8.0442,13.7808 7.9332,13.8218 7.8682,13.8378 C7.8022,13.8538 7.7522,13.8618 7.7192,13.8618 C7.5872,13.8618 7.5192,13.7658 7.5192,13.5698 L7.5192,13.1178 C7.5192,12.9658 7.5432,12.8578 7.5872,12.7948 C7.6312,12.7288 7.7192,12.6638 7.8522,12.5998 C8.1832,12.4368 8.5812,12.2968 9.0442,12.1788 C9.5092,12.0598 10.0002,11.9998 10.5202,11.9998 C11.6462,11.9998 12.4722,12.2528 12.9972,12.7528 C13.5212,13.2548 13.7852,14.0128 13.7852,15.0278 L13.7852,18.0408 Z" id="Fill-1" fill="#FFFFFF"></path>
+    </g></g>
+<text x="710" y="315" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="35" font-weight="700" fill="#273447">AWS Cloud</text>
+<rect x="700" y="386" width="1255" height="510" rx="15" fill="#EFF8FF" stroke="#B7D2E5" stroke-width="2"/>
+<g transform="translate(733 418) scale(1.15)">
+
+    <g id="Icon-Architecture/64/Arch_AWS-Elastic-Beanstalk_64" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="Icon-Architecture-BG/64/Compute" fill="#ED7100">
+            <rect id="Rectangle" x="0" y="0" width="80" height="80"></rect>
+        </g>
+        <path d="M50.4868099,45.9605228 C50.4868099,44.3028952 49.1425853,42.9539432 47.4907669,42.9539432 C45.8389486,42.9539432 44.4947239,44.3028952 44.4947239,45.9605228 C44.4947239,47.6181503 45.8389486,48.9671023 47.4907669,48.9671023 C49.1425853,48.9671023 50.4868099,47.6181503 50.4868099,45.9605228 M39.501319,35.938591 C41.1531374,35.938591 42.497362,34.5896389 42.497362,32.9320114 C42.497362,31.2743839 41.1531374,29.9254319 39.501319,29.9254319 C37.8495007,29.9254319 36.5052761,31.2743839 36.5052761,32.9320114 C36.5052761,34.5896389 37.8495007,35.938591 39.501319,35.938591 M30.5131901,46.9627159 C32.1650085,46.9627159 33.5092331,45.6137639 33.5092331,43.9561364 C33.5092331,42.2985089 32.1650085,40.9495569 30.5131901,40.9495569 C28.8613718,40.9495569 27.5171472,42.2985089 27.5171472,43.9561364 C27.5171472,45.6137639 28.8613718,46.9627159 30.5131901,46.9627159 M52.4841718,45.9605228 C52.4841718,48.3808193 50.7654419,50.4042473 48.4894479,50.8702672 L48.4894479,56.9846477 C48.4894479,57.5378584 48.0430375,57.9868409 47.4907669,57.9868409 L40.5,57.9868409 L40.5,64 L38.502638,64 L38.502638,52.975875 L30.5131901,52.975875 C29.9609195,52.975875 29.5145091,52.5268925 29.5145091,51.9736818 L29.5145091,48.8658808 C27.2385152,48.399861 25.5197852,46.3764329 25.5197852,43.9561364 C25.5197852,41.1930898 27.7598266,38.9451705 30.5131901,38.9451705 C33.2665536,38.9451705 35.5065951,41.1930898 35.5065951,43.9561364 C35.5065951,46.3764329 33.7878651,48.399861 31.5118711,48.8658808 L31.5118711,50.9714887 L38.502638,50.9714887 L38.502638,37.8417558 C36.2266441,37.375736 34.5079141,35.352308 34.5079141,32.9320114 C34.5079141,30.1689648 36.7479555,27.9210455 39.501319,27.9210455 C42.2546825,27.9210455 44.4947239,30.1689648 44.4947239,32.9320114 C44.4947239,35.352308 42.775994,37.375736 40.5,37.8417558 L40.5,55.9824546 L46.4920859,55.9824546 L46.4920859,50.8702672 C44.216092,50.4042473 42.497362,48.3808193 42.497362,45.9605228 C42.497362,43.1974762 44.7374034,40.9495569 47.4907669,40.9495569 C50.2441304,40.9495569 52.4841718,43.1974762 52.4841718,45.9605228 M67,41.0116928 C67,48.3547623 61.5442058,50.9714887 56.4389486,50.9714887 L56.4389486,48.9671023 C59.0135481,48.9671023 65.002638,48.1914048 65.002638,41.0116928 C65.002638,35.6399374 60.9320143,33.6926761 57.517524,33.0051715 C57.0721123,32.9159763 56.7435463,32.5361451 56.7165819,32.0821516 C56.468909,27.8749446 54.0261353,26.3816768 52.007801,26.3816768 C50.6436028,26.3816768 49.3642924,27.0341046 48.498436,28.172596 C48.2777275,28.4642342 47.9142077,28.6125588 47.5546825,28.556436 C47.1951573,28.5023176 46.892557,28.2547759 46.7667232,27.9110236 C45.984756,25.7793587 44.8622386,23.9934505 43.4291313,22.6024063 C39.7469945,19.0195657 34.7106463,18.0474383 29.9549275,20.0047216 C26.0061428,21.6182526 22.9142265,26.2834619 22.9142265,30.6259649 C22.9142265,31.1060155 22.9431882,31.5880704 23.0021104,32.0591012 C23.0640286,32.5632043 22.7414547,33.0342351 22.2511023,33.1555005 C19.9151875,33.7357704 15.997362,35.5176698 15.997362,40.9365284 C15.997362,41.141978 16.0063501,41.3384078 16.0163369,41.5238136 C16.2500283,45.6959438 19.9331637,48.9671023 24.4022612,48.9671023 L25.5197852,48.9671023 L25.5197852,50.9714887 L24.4022612,50.9714887 C18.8745619,50.9714887 14.3145845,46.869512 14.021971,41.6330526 C14.0109855,41.4105657 14,41.1790591 14,40.9365284 C14,34.6397486 18.3512531,32.2876012 20.9408329,31.4477633 C20.9238553,31.1741646 20.9168645,30.8995637 20.9168645,30.6259649 C20.9168645,25.4416196 24.4781609,20.0778817 29.2009233,18.149662 C34.7096476,15.8837032 40.5489354,17.008164 44.8182966,21.1622547 C46.1315621,22.4360423 47.2141323,23.9864351 48.0480309,25.7843697 C49.1735444,24.8773848 50.5547202,24.3772904 52.007801,24.3772904 C54.9668928,24.3772904 58.0767854,26.4959268 58.6430375,31.2032282 C64.0399096,32.5241188 67,35.9846919 67,41.0116928" id="AWS-Elastic-Beanstalk_Icon_64_Squid" fill="#FFFFFF"></path>
+    </g></g>
+<text x="847" y="471" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="35" font-weight="700" fill="#273447">AWS Elastic Beanstalk</text>
+<rect x="788" y="560" width="420" height="146" rx="13" fill="#FFFFFF" stroke="#AFC7D8" stroke-width="2"/>
+<rect x="811" y="584" width="76" height="76" rx="11" fill="#ED7100" stroke="none" stroke-width="1"/>
+<rect x="830" y="602" width="38" height="25" rx="3" fill="none" stroke="white" stroke-width="3"/>
+<path d="M 834 634 L 864 634" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="909" y="625" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="35" font-weight="700" fill="#273447">Visual Controller</text>
+<text x="909" y="668" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="25" font-weight="400" fill="#536275">Browser API + UI WebSocket</text>
+<rect x="1434" y="560" width="420" height="146" rx="13" fill="#FFFFFF" stroke="#AFC7D8" stroke-width="2"/>
+<rect x="1457" y="584" width="76" height="76" rx="11" fill="#ED7100" stroke="none" stroke-width="1"/>
+<rect x="1476" y="602" width="38" height="25" rx="3" fill="none" stroke="white" stroke-width="3"/>
+<path d="M 1480 634 L 1510 634" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="1555" y="625" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="35" font-weight="700" fill="#273447">Control Broker</text>
+<text x="1555" y="668" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="25" font-weight="400" fill="#536275">Command and gateway WS</text>
+<rect x="788" y="772" width="420" height="93" rx="13" fill="#F9FBFD" stroke="#CAD7E3" stroke-width="2"/>
+<rect x="811" y="796" width="76" height="49" rx="11" fill="#91A5B9" stroke="none" stroke-width="1"/>
+<rect x="830" y="814" width="38" height="25" rx="3" fill="none" stroke="white" stroke-width="3"/>
+<path d="M 834 846 L 864 846" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="909" y="831" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="32" font-weight="700" fill="#536275">Stream Cleaner</text>
+<rect x="1434" y="772" width="420" height="93" rx="13" fill="#F9FBFD" stroke="#CAD7E3" stroke-width="2"/>
+<rect x="1457" y="796" width="76" height="49" rx="11" fill="#91A5B9" stroke="none" stroke-width="1"/>
+<rect x="1476" y="814" width="38" height="25" rx="3" fill="none" stroke="white" stroke-width="3"/>
+<path d="M 1480 846 L 1510 846" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="1555" y="831" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="32" font-weight="700" fill="#536275">Telemetry Dashboard</text>
+<rect x="2000" y="386" width="728" height="510" rx="15" fill="#F8F5FC" stroke="#D7C6E8" stroke-width="2"/>
+<g transform="translate(2034 418) scale(1.15)">
+
+    <g id="Icon-Architecture/64/Arch_Amazon-ElastiCache_64" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="Icon-Architecture-BG/64/Database" fill="#C925D1">
+            <rect id="Rectangle" x="0" y="0" width="80" height="80"></rect>
+        </g>
+        <path d="M51,61.5554864 L51,55.7029342 C48.466,57.3400887 43.904,58.1131616 39.556,58.1131616 C34.816,58.1131616 31.121,57.2860836 29,55.8679498 L29,61.5554864 C29,63.2486461 32.948,64.9998113 39.556,64.9998113 C46.3,64.9998113 51,63.1846401 51,61.5554864 L51,61.5554864 Z M39.556,49.2203227 C34.816,49.2203227 31.121,48.3942447 29,46.976111 L29,52.6866497 C29.031,54.3738088 32.973,56.1129729 39.556,56.1129729 C46.279,56.1129729 50.969,54.3088027 51,52.6826493 L51,46.8100953 C48.466,48.4482498 43.904,49.2203227 39.556,49.2203227 L39.556,49.2203227 Z M51,43.7908105 L51,37.0291726 C48.466,38.666327 43.904,39.4393999 39.556,39.4393999 C34.816,39.4393999 31.121,38.613322 29,37.1951882 L29,43.7948108 C29.031,45.48197 32.973,47.220134 39.556,47.220134 C46.279,47.220134 50.969,45.4159638 51,43.7908105 L51,43.7908105 Z M28.997,33.9928861 C28.997,33.9958864 28.998,33.9988867 28.998,34.001887 L29,34.001887 L29,34.012888 C29.031,35.7000472 32.973,37.4392112 39.556,37.4392112 C46.898,37.4392112 50.969,35.4170205 51,34.0098877 L51,34.001887 L51.002,34.001887 C51.002,33.9988867 51.003,33.9958864 51.003,33.9928861 C51.003,32.5847533 46.927,30.546561 39.556,30.546561 C32.946,30.546561 28.997,32.2987263 28.997,33.9928861 L28.997,33.9928861 Z M53,34.0178885 L53,43.7738088 L53.003,43.7738088 C53.003,43.7828097 53,43.7898104 53,43.7988112 L53,52.6666478 L53.003,52.6666478 C53.003,52.6756486 53,52.6826493 53,52.6916502 L53,61.5554864 C53,65.2968393 46.031,67 39.556,67 C31.929,67 27,64.8627984 27,61.5554864 L27,52.6976507 C27,52.6866497 26.997,52.6776488 26.997,52.6666478 L27,52.6666478 L27,43.8048118 C27,43.7948108 26.997,43.7848099 26.997,43.7738088 L27,43.7738088 L27,34.023889 C27,34.012888 26.997,34.0038872 26.997,33.9928861 C26.997,30.684574 31.927,28.5463723 39.556,28.5463723 C46.032,28.5463723 53.003,30.2505331 53.003,33.9928861 C53.003,34.001887 53,34.0088876 53,34.0178885 L53,34.0178885 Z M67,21.1206718 C67.553,21.1206718 68,20.6726295 68,20.1205774 L68,15.0000943 C68,14.4470422 67.553,14 67,14 L13,14 C12.447,14 12,14.4470422 12,15.0000943 L12,20.1205774 C12,20.6726295 12.447,21.1206718 13,21.1206718 C14.221,21.1206718 15.214,22.1077649 15.214,23.3208793 C15.214,24.5339938 14.221,25.5210869 13,25.5210869 C12.447,25.5210869 12,25.9691292 12,26.5211812 L12,47.0031135 C12,47.5551656 12.447,48.0032078 13,48.0032078 L23,48.0032078 L23,46.0030192 L18,46.0030192 L18,43.0027361 L23,43.0027361 L23,41.0025474 L17,41.0025474 C16.447,41.0025474 16,41.4495896 16,42.0026418 L16,46.0030192 L14,46.0030192 L14,27.4012643 C15.843,26.9522219 17.214,25.2930654 17.214,23.3208793 C17.214,21.3476932 15.843,19.6885367 14,19.2394943 L14,16.0001887 L66,16.0001887 L66,19.2394943 C64.157,19.6885367 62.786,21.3476932 62.786,23.3208793 C62.786,25.2930654 64.157,26.9522219 66,27.4012643 L66,46.0030192 L64,46.0030192 L64,42.0026418 C64,41.4495896 63.553,41.0025474 63,41.0025474 L57,41.0025474 L57,43.0027361 L62,43.0027361 L62,46.0030192 L57,46.0030192 L57,48.0032078 L67,48.0032078 C67.553,48.0032078 68,47.5551656 68,47.0031135 L68,26.5211812 C68,25.9691292 67.553,25.5210869 67,25.5210869 C65.779,25.5210869 64.786,24.5339938 64.786,23.3208793 C64.786,22.1077649 65.779,21.1206718 67,21.1206718 L67,21.1206718 Z M28,28.0013209 L28,20.0005661 C28,19.4475139 27.553,19.0004717 27,19.0004717 L21,19.0004717 C20.447,19.0004717 20,19.4475139 20,20.0005661 L20,37.00217 C20,37.5542221 20.447,38.0022644 21,38.0022644 L24,38.0022644 L24,36.0020757 L22,36.0020757 L22,21.0006604 L26,21.0006604 L26,28.0013209 L28,28.0013209 Z M58,36.0020757 L57,36.0020757 L57,38.0022644 L59,38.0022644 C59.553,38.0022644 60,37.5542221 60,37.00217 L60,20.0005661 C60,19.4475139 59.553,19.0004717 59,19.0004717 L53,19.0004717 C52.447,19.0004717 52,19.4475139 52,20.0005661 L52,28.0013209 L54,28.0013209 L54,21.0006604 L58,21.0006604 L58,36.0020757 Z M50,27.0012265 L50,20.0005661 C50,19.4475139 49.553,19.0004717 49,19.0004717 L42,19.0004717 C41.447,19.0004717 41,19.4475139 41,20.0005661 L41,26.0011322 L43,26.0011322 L43,21.0006604 L48,21.0006604 L48,27.0012265 L50,27.0012265 Z M37,26.0011322 L37,21.0006604 L32,21.0006604 L32,27.0012265 L30,27.0012265 L30,20.0005661 C30,19.4475139 30.447,19.0004717 31,19.0004717 L38,19.0004717 C38.553,19.0004717 39,19.4475139 39,20.0005661 L39,26.0011322 L37,26.0011322 Z" id="Amazon-ElastiCache_Icon_64_Squid" fill="#FFFFFF"></path>
+    </g></g>
+<text x="2148" y="471" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="35" font-weight="700" fill="#273447">Amazon ElastiCache</text>
+<text x="2149" y="507" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="25" font-weight="650" fill="#536275">Redis-compatible Valkey</text>
+<rect x="2056" y="566" width="604" height="105" rx="13" fill="#FFFFFF" stroke="#C6B8DB" stroke-width="2"/>
+<rect x="2076" y="589" width="59" height="59" rx="9" fill="#8C4DC2" stroke="none" stroke-width="1"/>
+<path d="M 2091 605 L 2121 605" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 2091 618 L 2121 618" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 2091 631 L 2121 631" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="2156" y="613" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="30" font-weight="750" fill="#273447">tank_commands</text>
+<text x="2156" y="646" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="23" font-weight="400" fill="#536275">Visual Controller → Control Broker</text>
+<rect x="2056" y="728" width="604" height="105" rx="13" fill="#FFFFFF" stroke="#C6B8DB" stroke-width="2"/>
+<rect x="2076" y="751" width="59" height="59" rx="9" fill="#8C4DC2" stroke="none" stroke-width="1"/>
+<path d="M 2091 767 L 2121 767" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 2091 780 L 2121 780" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 2091 793 L 2121 793" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="2156" y="775" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="30" font-weight="750" fill="#273447">tank_status</text>
+<text x="2156" y="808" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="23" font-weight="400" fill="#536275">Control Broker → Visual Controller</text>
+<rect x="700" y="975" width="1280" height="310" rx="15" fill="#F3F9F2" stroke="#BED5C8" stroke-width="2"/>
+<g transform="translate(732 1008) scale(1.15)">
+
+    <g id="Icon-Architecture/64/Arch_Amazon-EC2_64" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="Icon-Architecture-BG/64/Compute" fill="#ED7100">
+            <rect id="Rectangle" x="0" y="0" width="80" height="80"></rect>
+        </g>
+        <path d="M27,53 L52,53 L52,28 L27,28 L27,53 Z M54,28 L58,28 L58,30 L54,30 L54,34 L58,34 L58,36 L54,36 L54,39 L58,39 L58,41 L54,41 L54,45 L58,45 L58,47 L54,47 L54,51 L58,51 L58,53 L54,53 L54,53.136 C54,54.164 53.164,55 52.136,55 L52,55 L52,59 L50,59 L50,55 L46,55 L46,59 L44,59 L44,55 L41,55 L41,59 L39,59 L39,55 L35,55 L35,59 L33,59 L33,55 L29,55 L29,59 L27,59 L27,55 L26.864,55 C25.836,55 25,54.164 25,53.136 L25,53 L22,53 L22,51 L25,51 L25,47 L22,47 L22,45 L25,45 L25,41 L22,41 L22,39 L25,39 L25,36 L22,36 L22,34 L25,34 L25,30 L22,30 L22,28 L25,28 L25,27.864 C25,26.836 25.836,26 26.864,26 L27,26 L27,22 L29,22 L29,26 L33,26 L33,22 L35,22 L35,26 L39,26 L39,22 L41,22 L41,26 L44,26 L44,22 L46,22 L46,26 L50,26 L50,22 L52,22 L52,26 L52.136,26 C53.164,26 54,26.836 54,27.864 L54,28 Z M41,65.876 C41,65.944 40.944,66 40.876,66 L14.124,66 C14.056,66 14,65.944 14,65.876 L14,39.124 C14,39.056 14.056,39 14.124,39 L20,39 L20,37 L14.124,37 C12.953,37 12,37.953 12,39.124 L12,65.876 C12,67.047 12.953,68 14.124,68 L40.876,68 C42.047,68 43,67.047 43,65.876 L43,61 L41,61 L41,65.876 Z M68,14.124 L68,40.876 C68,42.047 67.047,43 65.876,43 L60,43 L60,41 L65.876,41 C65.944,41 66,40.944 66,40.876 L66,14.124 C66,14.056 65.944,14 65.876,14 L39.124,14 C39.056,14 39,14.056 39,14.124 L39,20 L37,20 L37,14.124 C37,12.953 37.953,12 39.124,12 L65.876,12 C67.047,12 68,12.953 68,14.124 L68,14.124 Z" id="Amazon-EC2_Icon_64_Squid" fill="#FFFFFF"></path>
+    </g></g>
+<text x="846" y="1061" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="35" font-weight="700" fill="#273447">Amazon EC2 · media relay</text>
+<rect x="902" y="1102" width="470" height="97" rx="12" fill="#FFFFFF" stroke="#B7CDBE" stroke-width="2"/>
+<text x="934" y="1159" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="35" font-weight="700" fill="#273447">MediaMTX container</text>
+<rect x="1422" y="1102" width="444" height="97" rx="12" fill="#FFFFFF" stroke="#B7CDBE" stroke-width="2" stroke-dasharray="9 8"/>
+<text x="1453" y="1145" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="35" font-weight="700" fill="#273447">Caddy / TLS</text>
+<text x="1454" y="1177" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="22" font-weight="650" fill="#536275">optional HTTP proxy</text>
+<text x="1145" y="1250" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="25" font-weight="650" fill="#536275">EC2 Security Group  ·  Elastic IP</text>
+<rect x="2028" y="975" width="700" height="310" rx="15" fill="#F5F9EF" stroke="#C4D8B1" stroke-width="2"/>
+<g transform="translate(2061 1008) scale(1.15)">
+
+    <g id="Icon-Architecture/64/Arch_Amazon-Simple-Storage-Service_64" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="Icon-Architecture-BG/64/Storage" fill="#7AA116">
+            <rect id="Rectangle" x="0" y="0" width="80" height="80"></rect>
+        </g>
+        <g id="Icon-Service/64/Amazon-Simple-Storage-Service_64" transform="translate(12.999900, 11.999600)" fill="#FFFFFF">
+            <path d="M47.836,30.893 L48.22,28.189 C51.761,30.31 51.807,31.186 51.8060132,31.21 C51.8,31.215 51.196,31.719 47.836,30.893 L47.836,30.893 Z M45.893,30.353 C39.773,28.501 31.25,24.591 27.801,22.961 C27.801,22.947 27.805,22.934 27.805,22.92 C27.805,21.595 26.727,20.517 25.401,20.517 C24.077,20.517 22.999,21.595 22.999,22.92 C22.999,24.245 24.077,25.323 25.401,25.323 C25.983,25.323 26.511,25.106 26.928,24.761 C30.986,26.682 39.443,30.535 45.608,32.355 L43.17,49.561 C43.163,49.608 43.16,49.655 43.16,49.702 C43.16,51.217 36.453,54 25.494,54 C14.419,54 7.641,51.217 7.641,49.702 C7.641,49.656 7.638,49.611 7.632,49.566 L2.538,12.359 C6.947,15.394 16.43,17 25.5,17 C34.556,17 44.023,15.4 48.441,12.374 L45.893,30.353 Z M2,8.478 C2.072,7.162 9.634,2 25.5,2 C41.364,2 48.927,7.161 49,8.478 L49,8.927 C48.13,11.878 38.33,15 25.5,15 C12.648,15 2.843,11.868 2,8.913 L2,8.478 Z M51,8.5 C51,5.035 41.066,0 25.5,0 C9.934,0 0,5.035 0,8.5 L0.094,9.254 L5.642,49.778 C5.775,54.31 17.861,56 25.494,56 C34.966,56 45.029,53.822 45.159,49.781 L47.555,32.884 C48.888,33.203 49.985,33.366 50.866,33.366 C52.049,33.366 52.849,33.077 53.334,32.499 C53.732,32.025 53.884,31.451 53.77,30.84 C53.511,29.456 51.868,27.964 48.522,26.055 L50.898,9.293 L51,8.5 Z" id="Amazon-Simple-Storage-Service-Icon_64_Squid"></path>
+        </g>
+    </g></g>
+<text x="2175" y="1061" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="35" font-weight="700" fill="#273447">Amazon S3</text>
+<text x="2080" y="1157" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="33" font-weight="700" fill="#273447">Elastic Beanstalk</text>
+<text x="2080" y="1204" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="33" font-weight="700" fill="#273447">deployment bundles</text>
+<path d="M 460 507 L 675 507 L 675 599 L 788 599" fill="none" stroke="#8391A0" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+<polygon points="788.0,599.0 770.0,608.0 770.0,590.0" fill="#8391A0"/>
+<text x="499" y="488" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="24" font-weight="650" fill="#3964A8">HTTPS / REST</text>
+<path d="M 788 680 L 574 680 L 574 560 L 460 560" fill="none" stroke="#8391A0" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+<polygon points="460.0,560.0 478.0,551.0 478.0,569.0" fill="#8391A0"/>
+<text x="583" y="662" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="24" font-weight="650" fill="#3964A8">UI WebSocket</text>
+<path d="M 1000 560 L 1000 534 L 2025 534 L 2025 617 L 2056 617" fill="none" stroke="#8391A0" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+<polygon points="2056.0,617.0 2038.0,626.0 2038.0,608.0" fill="#8391A0"/>
+<text x="1558" y="520" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="24" font-weight="650" fill="#3964A8">Redis Streams</text>
+<path d="M 2056 650 L 1854 650" fill="none" stroke="#8391A0" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+<polygon points="1854,650 1872.0,641.0 1872.0,659.0" fill="#8391A0"/>
+<path d="M 1854 696 L 1974 696 L 1974 776 L 2056 776" fill="none" stroke="#8391A0" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+<polygon points="2056.0,776.0 2038.0,785.0 2038.0,767.0" fill="#8391A0"/>
+<path d="M 2056 833 L 1980 833 L 1980 746 L 1000 746 L 1000 706" fill="none" stroke="#8391A0" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+<polygon points="1000.0,706.0 1009.0,724.0 991.0,724.0" fill="#8391A0"/>
+<path d="M 460 778 L 545 778 L 545 927 L 1968 927 L 1968 640 L 1854 640" fill="none" stroke="#8391A0" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+<polygon points="1854.0,640.0 1872.0,631.0 1872.0,649.0" fill="#8391A0"/>
+<path d="M 545 778 L 460 778" fill="none" stroke="#8391A0" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+<polygon points="460,778 478.0,769.0 478.0,787.0" fill="#8391A0"/>
+<text x="740" y="918" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="24" font-weight="650" fill="#3964A8">WebSocket · commands / gateway status</text>
+<path d="M 460 1088 L 874 1088 L 874 1150 L 902 1150" fill="none" stroke="#168487" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+<polygon points="902.0,1150.0 884.0,1159.0 884.0,1141.0" fill="#168487"/>
+<text x="530" y="1073" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="24" font-weight="650" fill="#168487">RTSP · H.264</text>
+<path d="M 1000 1199 L 1000 1238 L 460 1238" fill="none" stroke="#168487" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+<polygon points="460.0,1238.0 478.0,1229.0 478.0,1247.0" fill="#168487"/>
+<text x="555" y="1223" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="24" font-weight="650" fill="#168487">WebRTC / WHEP</text>
+<rect x="1980" y="1404" width="317" height="139" rx="13" fill="#FFFFFF" stroke="#C9D1DC" stroke-width="2"/>
+<rect x="2000" y="1426" width="75" height="75" rx="11" fill="#242F3E" stroke="none" stroke-width="1"/>
+<text x="2038" y="1477" text-anchor="middle" font-family="Lato, DejaVu Sans, sans-serif" font-size="30" font-weight="800" fill="#FFFFFF">GH</text>
+<text x="2093" y="1462" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="33" font-weight="700" fill="#273447">GitHub</text>
+<text x="2093" y="1503" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="33" font-weight="700" fill="#273447">Actions</text>
+<rect x="2425" y="1404" width="320" height="139" rx="13" fill="#FFFFFF" stroke="#C9D1DC" stroke-width="2"/>
+<rect x="2445" y="1426" width="75" height="75" rx="11" fill="#844FBA" stroke="none" stroke-width="1"/>
+<text x="2483" y="1477" text-anchor="middle" font-family="Lato, DejaVu Sans, sans-serif" font-size="39" font-weight="800" fill="#FFFFFF">T</text>
+<text x="2536" y="1483" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="33" font-weight="700" fill="#273447">Terraform</text>
+<path d="M 2160 1404 L 2160 1285" fill="none" stroke="#8A5CB0" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="11 8"/>
+<polygon points="2160,1285 2169.0,1303.0 2151.0,1303.0" fill="#8A5CB0"/>
+<text x="2030" y="1375" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="24" font-weight="650" fill="#8A5CB0">EB bundles</text>
+<path d="M 2395 975 L 2395 945 L 1980 945 L 1980 908 L 1938 908" fill="none" stroke="#8A5CB0" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="11 8"/>
+<polygon points="1938.0,908.0 1956.0,899.0 1956.0,917.0" fill="#8A5CB0"/>
+<text x="2176" y="934" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="22" font-weight="650" fill="#8A5CB0">EB deploy</text>
+<path d="M 2297 1474 L 2425 1474" fill="none" stroke="#8A5CB0" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="11 8"/>
+<polygon points="2425,1474 2407.0,1483.0 2407.0,1465.0" fill="#8A5CB0"/>
+<path d="M 2585 1543 L 2585 1570 L 1742 1570 L 1742 1285" fill="none" stroke="#8A5CB0" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="11 8"/>
+<polygon points="1742.0,1285.0 1751.0,1303.0 1733.0,1303.0" fill="#8A5CB0"/>
+<text x="1370" y="1555" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="23" font-weight="650" fill="#8A5CB0">provisions EC2 relay</text>
 </svg>

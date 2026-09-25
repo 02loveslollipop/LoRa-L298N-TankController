@@ -1,6 +1,6 @@
 # Architecture diagrams
 
-The [end-to-end diagram](rendered/system-architecture.svg) is the best overview for a general audience. It separates browser commands and gateway status from the independent camera/video route. The [AWS deployment diagram](rendered/aws-deployment.svg) focuses on cloud resources and separates solid runtime traffic from dashed deployment traffic. Both are 16:9 SVGs with 2880×1620 PNG exports.
+The [end-to-end diagram](rendered/system-architecture.svg) is the best overview for a general audience. It separates browser commands and gateway status from the independent camera/video route. The [AWS deployment diagram](rendered/aws-deployment.svg) uses AWS service icons and nested resource boundaries; solid links show runtime traffic and dashed links show deployment. Both are 16:9 SVGs with 2880×1620 PNG exports.
 
 ![End-to-end teleoperation architecture](rendered/system-architecture.svg)
 
@@ -46,4 +46,4 @@ From the repository root, run:
 ./docs/architecture/render.sh
 ```
 
-The two Python sources and [`svg_canvas.py`](svg_canvas.py) use only the Python standard library to write the SVGs. The script then uses ImageMagick (`magick` or `convert`) to export the PNGs. Edit the Python sources and rerun the script; keep the generated SVG and PNG files in version control. The sequence source is Mermaid and can be rendered by Mermaid-compatible Markdown viewers.
+The two Python sources and [`svg_canvas.py`](svg_canvas.py) use only the Python standard library to write the SVGs. The AWS source embeds the versioned [AWS service icons](icons/README.md) into its SVG, so the final file is self-contained. The script then uses ImageMagick (`magick` or `convert`) to export the PNGs. Edit the Python sources and rerun the script; keep the generated SVG and PNG files in version control. The sequence source is Mermaid and can be rendered by Mermaid-compatible Markdown viewers.

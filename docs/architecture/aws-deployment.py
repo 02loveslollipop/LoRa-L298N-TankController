@@ -1,123 +1,193 @@
-"""Render the repository-supported AWS deployment view as an editable SVG.
+"""Render the source-verified AWS deployment topology with AWS service icons.
 
-Evidence: .github/workflows/deploy.yaml, infra/terraform/media_relay/*,
-the four service Dockerfiles/Procfiles, and Redis stream configuration.
-Elastic Beanstalk and ElastiCache are used by the project; only the media
-relay EC2 resources are provisioned by this repository's Terraform module.
+The icon artwork in icons/ is from the AWS Architecture Icon Package (July
+2026). The layout and links are derived from the repository's deploy workflow,
+media-relay Terraform, service code, and Redis stream configuration. This view
+does not imply that the repository provisions its Beanstalk or Valkey resources.
 """
 
 from pathlib import Path
+import re
 
 from svg_canvas import Canvas
 
 
-OUT = Path(__file__).parent / "rendered" / "aws-deployment.svg"
+HERE = Path(__file__).parent
+OUT = HERE / "rendered" / "aws-deployment.svg"
 
-INK = "#14263D"
-MUTED = "#52647A"
-RUNTIME = "#2365C7"
-MEDIA = "#087F8C"
-DEPLOY = "#D57C22"
-ORANGE = "#C76A21"
-PURPLE = "#7754B8"
-RED = "#C65353"
+INK = "#273447"
+MUTED = "#536275"
+RULE = "#8391A0"
+CONTROL = "#3964A8"
+MEDIA = "#168487"
+DEPLOY = "#8A5CB0"
+PALE_BLUE = "#EFF8FF"
+PALE_GREEN = "#F3F9F2"
+PALE_PURPLE = "#F8F5FC"
 
 
-def service_group(c: Canvas, x: int, y: int, w: int, h: int, code: str, title: str, *, accent: str, fill: str) -> None:
-    c.rect(x, y, w, h, fill=fill, stroke="#D1DDE9", stroke_width=2, radius=24)
-    c.rect(x + 25, y + 24, 62, 62, fill=accent, radius=14)
-    c.text(x + 56, y + 65, code, size=25 if len(code) < 3 else 21, color="#FFFFFF", weight=900, anchor="middle")
-    c.text(x + 105, y + 66, title, size=34, color=INK, weight=800)
+def icon(c: Canvas, name: str, x: int, y: int, size: int) -> None:
+    """Inline an official AWS icon so the rendered SVG remains standalone."""
+    source = (HERE / "icons" / f"{name}.svg").read_text(encoding="utf-8")
+    body = re.search(r"<svg[^>]*>(.*)</svg>", source, re.S).group(1)
+    body = re.sub(r"<title>.*?</title>", "", body, flags=re.S)
+    body = "\n".join(line.rstrip() for line in body.splitlines())
+    dimension = 40 if name == "aws-cloud" else 80
+    c.raw(f'<g transform="translate({x} {y}) scale({size / dimension})">{body}</g>')
+
+
+def heading(c: Canvas, x: int, y: int, title: str, *, color: str = INK) -> None:
+    c.text(x, y, title, size=35, color=color, weight=700)
+
+
+def app(c: Canvas, x: int, y: int, title: str, subtitle: str, *, secondary: bool = False) -> None:
+    fill = "#F9FBFD" if secondary else "#FFFFFF"
+    stroke = "#CAD7E3" if secondary else "#AFC7D8"
+    c.rect(x, y, 420, 146 if not secondary else 93, fill=fill, stroke=stroke, stroke_width=2, radius=13)
+    c.rect(x + 23, y + 24, 76, 76 if not secondary else 49, fill="#91A5B9" if secondary else "#ED7100", radius=11)
+    # A generic application glyph avoids claiming these are separate AWS services.
+    c.raw(f'<rect x="{x + 42}" y="{y + 42}" width="38" height="25" rx="3" fill="none" stroke="white" stroke-width="3"/>')
+    c.line(x + 46, y + 74, x + 76, y + 74, color="#FFFFFF", width=3)
+    c.text(x + 121, y + (59 if secondary else 65), title, size=32 if secondary else 35,
+           color=MUTED if secondary else INK, weight=700)
+    if not secondary:
+        c.text(x + 121, y + 108, subtitle, size=25, color=MUTED)
+
+
+def stream(c: Canvas, x: int, y: int, name: str, role: str) -> None:
+    c.rect(x, y, 604, 105, fill="#FFFFFF", stroke="#C6B8DB", stroke_width=2, radius=13)
+    c.rect(x + 20, y + 23, 59, 59, fill="#8C4DC2", radius=9)
+    for offset in (39, 52, 65):
+        c.line(x + 35, y + offset, x + 65, y + offset, color="#FFFFFF", width=3)
+    c.text(x + 100, y + 47, name, size=30, color=INK, weight=750)
+    c.text(x + 100, y + 80, role, size=23, color=MUTED)
+
+
+def external(c: Canvas, x: int, y: int, title: str, detail: str, kind: str) -> None:
+    # Simple monochrome hardware/person pictograms are intentionally distinct
+    # from the colored AWS product icons inside the cloud boundary.
+    if kind == "browser":
+        c.rect(x, y, 92, 69, fill="#FFFFFF", stroke=INK, stroke_width=4, radius=8)
+        c.line(x + 3, y + 18, x + 89, y + 18, color=INK, width=3)
+        for offset in (13, 25, 37):
+            c.raw(f'<circle cx="{x + offset}" cy="{y + 10}" r="3" fill="{INK}"/>')
+        c.line(x + 28, y + 80, x + 64, y + 80, color=INK, width=4)
+    elif kind == "chip":
+        c.rect(x + 12, y + 7, 68, 68, fill="#FFFFFF", stroke=INK, stroke_width=4, radius=8)
+        for offset in (25, 43, 61):
+            c.line(x, y + offset, x + 12, y + offset, color=INK, width=4)
+            c.line(x + 80, y + offset, x + 92, y + offset, color=INK, width=4)
+        c.raw(f'<circle cx="{x + 46}" cy="{y + 41}" r="13" fill="none" stroke="{INK}" stroke-width="4"/>')
+    c.text(x + 46, y + 126, title, size=32, color=INK, weight=700, anchor="middle")
+    c.text(x + 46, y + 162, detail, size=23, color=MUTED, anchor="middle")
+
+
+def label(c: Canvas, x: int, y: int, value: str, *, color: str = MUTED, size: int = 24) -> None:
+    c.text(x, y, value, size=size, color=color, weight=650)
 
 
 def main() -> None:
     c = Canvas(
         "Long-Range IoT Teleoperation System — AWS Deployment Architecture",
-        "AWS deployment view showing Elastic Beanstalk applications, ElastiCache Valkey streams, EC2 MediaMTX with Elastic IP and Security Group, S3 deployment bundles, and GitHub Actions and Terraform delivery paths.",
+        "AWS Cloud with Elastic Beanstalk applications, ElastiCache Valkey command and status streams, EC2 MediaMTX relay, S3 deployment bundles, and separate runtime and deployment links. External browser, gateway, and Radxa systems are outside AWS.",
     )
-    c.rect(0, 0, 2880, 1620, fill="#F7F9FC")
-    c.rect(80, 75, 12, 102, fill=ORANGE, radius=6)
-    c.text(112, 128, "Long-Range IoT Teleoperation System", size=68, color=INK, weight=800)
-    c.text(113, 180, "AWS Deployment Architecture", size=34, color=MUTED, weight=600)
-    c.line(2085, 116, 2155, 116, color=RUNTIME, width=8)
-    c.text(2177, 125, "Runtime traffic", size=27, color=INK, weight=700)
-    c.line(2438, 116, 2508, 116, color=DEPLOY, width=8, dash="16 10")
-    c.text(2530, 125, "Deployment", size=27, color=INK, weight=700)
+    c.rect(0, 0, 2880, 1620, fill="#FFFFFF")
+    c.text(100, 120, "Long-Range IoT Teleoperation System", size=66, color=INK, weight=800)
+    c.text(101, 183, "AWS Deployment Architecture", size=38, color=MUTED, weight=600)
+    c.line(2050, 130, 2120, 130, color=RULE, width=4)
+    label(c, 2141, 140, "Runtime", size=25)
+    c.line(2325, 130, 2395, 130, color=DEPLOY, width=4, dash="11 8")
+    label(c, 2416, 140, "Deployment", size=25)
 
-    # External systems remain outside the AWS boundary. The lower row is the
-    # delivery lane, not an AWS-managed service.
-    c.rect(80, 262, 580, 1030, fill="#FFFFFF", stroke="#D1DDE9", stroke_width=2, radius=28)
-    c.pill(108, 288, 58, 54, "E", fill="#E8F0FC", color=RUNTIME, size=28)
-    c.text(187, 327, "EXTERNAL / EDGE", size=30, color=INK, weight=800)
-    c.line(108, 356, 632, 356, color="#E4EBF3", width=2)
-    c.card(112, 406, 470, 160, eyebrow="OPERATOR", title="Browser / Control UI", subtitle="Commands + live status", accent=RUNTIME, title_size=36)
-    c.card(112, 680, 470, 160, eyebrow="LOCAL EDGE", title="LoRa gateway", subtitle="LilyGO T-Beam / ESP32", accent=ORANGE, title_size=37)
-    c.card(112, 925, 470, 160, eyebrow="ON ROBOT", title="Radxa Rock 3C", subtitle="RTSP camera uplink", accent=MEDIA, title_size=37)
-    c.card(112, 1115, 470, 165, eyebrow="OPERATOR", title="Browser playback", subtitle="WebRTC / WHEP", accent=MEDIA, title_size=34)
+    # External systems; playback is shown as a second port of the same browser.
+    label(c, 105, 318, "EXTERNAL / EDGE", color=INK, size=29)
+    external(c, 255, 417, "Browser operator", "Control + live status", "browser")
+    external(c, 255, 699, "LoRa gateway", "WebSocket client", "chip")
+    external(c, 255, 998, "Radxa Rock 3C", "RTSP video uplink", "chip")
+    external(c, 255, 1171, "Browser playback", "Same operator · WHEP", "browser")
 
-    c.rect(700, 262, 2100, 1260, fill="#FFFFFF", stroke="#BFCFDE", stroke_width=3, radius=28)
-    c.pill(728, 288, 92, 54, "AWS", fill="#FFE9D5", color=ORANGE, size=27)
-    c.text(841, 327, "AWS CLOUD", size=30, color=INK, weight=800)
-    c.text(2755, 326, "Runtime resources + deployment artifacts", size=25, color=MUTED, anchor="end")
-    c.line(728, 356, 2772, 356, color="#E4EBF3", width=2)
+    # Cloud boundary and three actual resource groups. No VPC, subnet, ALB,
+    # API Gateway, or orchestration service is asserted by repository evidence.
+    c.rect(605, 260, 2195, 1070, fill="#FFFFFF", stroke="#8090A2", stroke_width=3)
+    icon(c, "aws-cloud", 605, 260, 82)
+    heading(c, 710, 315, "AWS Cloud")
 
-    service_group(c, 740, 385, 1160, 490, "EB", "AWS Elastic Beanstalk", accent=ORANGE, fill="#FFF9F3")
-    c.card(776, 478, 506, 155, eyebrow="APPLICATION", title="Visual Controller", subtitle="API + browser WebSocket", accent=ORANGE, title_size=38)
-    c.card(1356, 478, 506, 155, eyebrow="APPLICATION", title="Control Broker", subtitle="Commands + gateway WS", accent=ORANGE, title_size=38)
-    c.card(776, 678, 506, 155, eyebrow="SECONDARY SERVICE", title="Stream Cleaner", subtitle="Stream retention", accent="#A8B6C7", title_size=34, muted=True)
-    c.card(1356, 678, 506, 155, eyebrow="SECONDARY SERVICE", title="Telemetry Dashboard", subtitle="Monitoring view", accent="#A8B6C7", title_size=34, muted=True)
+    c.rect(700, 386, 1255, 510, fill=PALE_BLUE, stroke="#B7D2E5", stroke_width=2, radius=15)
+    icon(c, "elastic-beanstalk", 733, 418, 92)
+    heading(c, 847, 471, "AWS Elastic Beanstalk")
+    app(c, 788, 560, "Visual Controller", "Browser API + UI WebSocket")
+    app(c, 1434, 560, "Control Broker", "Command and gateway WS")
+    app(c, 788, 772, "Stream Cleaner", "", secondary=True)
+    app(c, 1434, 772, "Telemetry Dashboard", "", secondary=True)
 
-    service_group(c, 1936, 385, 826, 490, "V", "Amazon ElastiCache / Valkey", accent=PURPLE, fill="#FAF7FF")
-    c.rect(1980, 500, 738, 115, fill="#FFFFFF", stroke="#D9CDEC", stroke_width=2, radius=18)
-    c.text(2010, 545, "REDIS STREAM", size=23, color=PURPLE, weight=800, letter_spacing=1.1)
-    c.text(2010, 589, "tank_commands", size=37, color=INK, weight=800)
-    c.rect(1980, 648, 738, 115, fill="#FFFFFF", stroke="#D9CDEC", stroke_width=2, radius=18)
-    c.text(2010, 693, "REDIS STREAM", size=23, color=PURPLE, weight=800, letter_spacing=1.1)
-    c.text(2010, 737, "tank_status", size=37, color=INK, weight=800)
-    c.text(1980, 807, "Commands: Visual Controller → Broker", size=23, color=MUTED, weight=600)
-    c.text(1980, 839, "Status: Broker → Visual Controller", size=23, color=MUTED, weight=600)
+    c.rect(2000, 386, 728, 510, fill=PALE_PURPLE, stroke="#D7C6E8", stroke_width=2, radius=15)
+    icon(c, "elasticache", 2034, 418, 92)
+    heading(c, 2148, 471, "Amazon ElastiCache")
+    label(c, 2149, 507, "Redis-compatible Valkey", size=25)
+    stream(c, 2056, 566, "tank_commands", "Visual Controller → Control Broker")
+    stream(c, 2056, 728, "tank_status", "Control Broker → Visual Controller")
 
-    service_group(c, 1550, 924, 1212, 345, "EC2", "Amazon EC2 · media relay", accent=ORANGE, fill="#FFF9F3")
-    c.card(1590, 1012, 700, 155, eyebrow="CONTAINER", title="MediaMTX", subtitle="RTSP ingest · WebRTC / HLS output", accent=ORANGE, title_size=40)
-    c.rect(2326, 1012, 396, 155, fill="#FFFFFF", stroke="#D8BFA5", stroke_width=2, radius=20, dash="9 8")
-    c.text(2355, 1053, "OPTIONAL", size=22, color=ORANGE, weight=800, letter_spacing=1.2)
-    c.text(2355, 1105, "Caddy / TLS", size=36, color=INK, weight=800)
-    c.text(2355, 1148, "WHEP + HLS HTTP proxy", size=24, color=MUTED)
-    c.pill(1592, 1193, 364, 53, "EC2 Security Group", fill="#FFF0DF", color=ORANGE, size=25)
-    c.pill(1982, 1193, 251, 53, "Elastic IP", fill="#FFF0DF", color=ORANGE, size=25)
+    c.rect(700, 975, 1280, 310, fill=PALE_GREEN, stroke="#BED5C8", stroke_width=2, radius=15)
+    icon(c, "ec2", 732, 1008, 92)
+    heading(c, 846, 1061, "Amazon EC2 · media relay")
+    c.rect(902, 1102, 470, 97, fill="#FFFFFF", stroke="#B7CDBE", stroke_width=2, radius=12)
+    heading(c, 934, 1159, "MediaMTX container")
+    c.rect(1422, 1102, 444, 97, fill="#FFFFFF", stroke="#B7CDBE", stroke_width=2, radius=12, dash="9 8")
+    heading(c, 1453, 1145, "Caddy / TLS")
+    label(c, 1454, 1177, "optional HTTP proxy", size=22)
+    label(c, 1145, 1250, "EC2 Security Group  ·  Elastic IP", size=25)
 
-    # Draw delivery links before runtime links so the solid paths remain clear
-    # at their two deliberate intersections.
-    c.text(108, 1342, "DELIVERY / IaC", size=24, color=DEPLOY, weight=800, letter_spacing=1.0)
-    c.card(112, 1350, 287, 155, eyebrow="CI / CD", title="GitHub Actions", subtitle="Push + manual jobs", accent=DEPLOY, title_size=32, subtitle_size=24)
-    c.card(429, 1350, 236, 155, eyebrow="MEDIA IaC", title="Terraform", subtitle="Manual dispatch", accent=DEPLOY, title_size=34, subtitle_size=22)
-    service_group(c, 780, 1340, 510, 155, "S3", "Amazon S3", accent=RED, fill="#FFF8F8")
-    c.text(810, 1469, "EB deployment bundles", size=26, color=MUTED, weight=600)
+    c.rect(2028, 975, 700, 310, fill="#F5F9EF", stroke="#C4D8B1", stroke_width=2, radius=15)
+    icon(c, "s3", 2061, 1008, 92)
+    heading(c, 2175, 1061, "Amazon S3")
+    c.text(2080, 1157, "Elastic Beanstalk", size=33, color=INK, weight=700)
+    c.text(2080, 1204, "deployment bundles", size=33, color=INK, weight=700)
 
-    c.line(399, 1432, 421, 1432, color=DEPLOY, width=5, dash="14 10", marker="arrow-deploy")
-    c.path("M 380 1350 L 380 1294 L 990 1294 L 990 1332", color=DEPLOY, width=5, dash="14 10", marker="arrow-deploy")
-    c.path("M 1015 1340 L 1015 910 L 1035 910 L 1035 875", color=DEPLOY, width=5, dash="14 10", marker="arrow-deploy")
-    c.path("M 665 1430 L 690 1430 L 690 1503 L 2184 1503 L 2184 1264", color=DEPLOY, width=5, dash="14 10", marker="arrow-deploy")
-    c.pill(817, 1250, 310, 48, "EB bundles / versions", fill="#FFF0DF", color=DEPLOY, size=23)
-    c.pill(1704, 1432, 332, 48, "Terraform provisions relay", fill="#FFF0DF", color=DEPLOY, size=23)
+    # Runtime: HTTPS and browser UI WebSocket at left; the Valkey stream links
+    # follow the actual command/status direction. A paired arrow marks the
+    # command and gateway-reported status on the same gateway WebSocket.
+    c.path("M 460 507 L 675 507 L 675 599 L 788 599", color=RULE, width=4, marker="arrow-blue")
+    label(c, 499, 488, "HTTPS / REST", color=CONTROL)
+    c.path("M 788 680 L 574 680 L 574 560 L 460 560", color=RULE, width=4, marker="arrow-blue")
+    label(c, 583, 662, "UI WebSocket", color=CONTROL)
 
-    # Runtime links. The end-to-end diagram has the full directional status
-    # sequence; here bidirectional labels keep the deployment view readable.
-    c.line(582, 549, 783, 549, color=RUNTIME, width=6, marker="arrow-blue")
-    c.pill(586, 572, 182, 47, "HTTPS / REST", fill="#E8F0FC", color=RUNTIME, size=22)
-    c.path("M 1609 633 L 1609 666 L 610 666 L 610 759 L 575 759", color=RUNTIME, width=6, marker="arrow-blue")
-    c.pill(190, 590, 316, 47, "Gateway status · WebSocket", fill="#E6F6F2", color="#139B87", size=22)
-    c.path("M 1035 478 L 1035 466 L 1908 466 L 1908 557 L 1972 557", color=RUNTIME, width=5, marker="arrow-blue")
-    c.line(1980, 591, 1858, 591, color=RUNTIME, width=5, marker="arrow-blue")
-    c.path("M 350 680 L 350 642 L 1320 642 L 1320 610 L 1363 610", color="#139B87", width=5, marker="arrow-green")
-    c.path("M 1862 615 L 1905 615 L 1905 706 L 1986 706", color="#139B87", width=5, marker="arrow-green")
-    c.line(1980, 755, 1900, 755, color="#139B87", width=5, marker="arrow-green")
-    c.line(776, 500, 575, 500, color="#139B87", width=5, marker="arrow-green")
+    c.path("M 1000 560 L 1000 534 L 2025 534 L 2025 617 L 2056 617", color=RULE, width=4, marker="arrow-blue")
+    label(c, 1558, 520, "Redis Streams", color=CONTROL)
+    c.line(2056, 650, 1854, 650, color=RULE, width=4, marker="arrow-blue")
+    c.path("M 1854 696 L 1974 696 L 1974 776 L 2056 776", color=RULE, width=4, marker="arrow-blue")
+    c.path("M 2056 833 L 1980 833 L 1980 746 L 1000 746 L 1000 706", color=RULE, width=4, marker="arrow-blue")
 
-    c.line(582, 1038, 1598, 1089, color=MEDIA, width=7, marker="arrow-teal")
-    c.pill(930, 963, 375, 50, "RTSP / Internet · H.264", fill="#E5F4F3", color=MEDIA, size=24)
-    c.path("M 1780 1167 L 1780 1210 L 575 1210", color=MEDIA, width=7, marker="arrow-teal")
-    c.pill(920, 1138, 303, 50, "WebRTC / WHEP", fill="#E5F4F3", color=MEDIA, size=25)
+    c.path("M 460 778 L 545 778 L 545 927 L 1968 927 L 1968 640 L 1854 640", color=RULE, width=4, marker="arrow-blue")
+    c.line(545, 778, 460, 778, color=RULE, width=4, marker="arrow-blue")
+    label(c, 740, 918, "WebSocket · commands / gateway status", color=CONTROL)
+
+    # The media plane stays below the control services. Browser playback uses
+    # WHEP, while the Radxa uplink is RTSP/H.264.
+    c.path("M 460 1088 L 874 1088 L 874 1150 L 902 1150", color=MEDIA, width=5, marker="arrow-teal")
+    label(c, 530, 1073, "RTSP · H.264", color=MEDIA)
+    c.path("M 1000 1199 L 1000 1238 L 460 1238", color=MEDIA, width=5, marker="arrow-teal")
+    label(c, 555, 1223, "WebRTC / WHEP", color=MEDIA)
+
+    # Delivery sits outside the runtime resource groups. The push workflow
+    # uploads bundles to S3 and updates EB; manual dispatch runs Terraform.
+    c.rect(1980, 1404, 317, 139, fill="#FFFFFF", stroke="#C9D1DC", stroke_width=2, radius=13)
+    c.rect(2000, 1426, 75, 75, fill="#242F3E", radius=11)
+    c.text(2038, 1477, "GH", size=30, color="#FFFFFF", weight=800, anchor="middle")
+    c.text(2093, 1462, "GitHub", size=33, color=INK, weight=700)
+    c.text(2093, 1503, "Actions", size=33, color=INK, weight=700)
+
+    c.rect(2425, 1404, 320, 139, fill="#FFFFFF", stroke="#C9D1DC", stroke_width=2, radius=13)
+    c.rect(2445, 1426, 75, 75, fill="#844FBA", radius=11)
+    c.text(2483, 1477, "T", size=39, color="#FFFFFF", weight=800, anchor="middle")
+    c.text(2536, 1483, "Terraform", size=33, color=INK, weight=700)
+
+    c.line(2160, 1404, 2160, 1285, color=DEPLOY, width=4, dash="11 8", marker="arrow-deploy")
+    label(c, 2030, 1375, "EB bundles", color=DEPLOY)
+    c.path("M 2395 975 L 2395 945 L 1980 945 L 1980 908 L 1938 908", color=DEPLOY, width=4, dash="11 8", marker="arrow-deploy")
+    label(c, 2176, 934, "EB deploy", color=DEPLOY, size=22)
+    c.line(2297, 1474, 2425, 1474, color=DEPLOY, width=4, dash="11 8", marker="arrow-deploy")
+    c.path("M 2585 1543 L 2585 1570 L 1742 1570 L 1742 1285", color=DEPLOY, width=4, dash="11 8", marker="arrow-deploy")
+    label(c, 1370, 1555, "provisions EC2 relay", color=DEPLOY, size=23)
 
     c.save(OUT)
 
