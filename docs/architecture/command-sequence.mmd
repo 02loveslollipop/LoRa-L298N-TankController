@@ -1,0 +1,32 @@
+sequenceDiagram
+    autonumber
+    actor Browser
+    participant Visual as Visual Controller
+    participant Commands as tank_commands
+    participant Broker as Control Broker
+    participant Gateway as WebSocket–LoRa Gateway
+    participant Radio as LoRa link
+    participant Receiver as Robot ESP32 Receiver
+    participant Driver as L298N Driver
+    participant Motors as Left / Right Motors
+    participant Status as tank_status
+
+    Browser->>Visual: POST Forward (HTTPS / REST)
+    Visual->>Commands: XADD Forward
+    Broker->>Commands: XREAD
+    Commands-->>Broker: Forward event
+    Broker->>Gateway: Command JSON (WebSocket)
+    Gateway->>Radio: Encrypted 16-byte control frame
+    par Radio delivery
+        Radio->>Receiver: LoRa packet
+        Receiver->>Receiver: Decrypt, CRC32, duplicate-sequence check
+        Receiver->>Driver: Direction + PWM
+        Driver->>Motors: Drive tracks forward
+    and Gateway-reported state
+        Gateway-->>Broker: Gateway status (WebSocket)
+        Broker->>Status: XADD gateway status
+        Visual->>Status: XREAD
+        Status-->>Visual: Gateway status event
+        Visual-->>Browser: Status update (UI WebSocket)
+    end
+    Note over Gateway,Receiver: No LoRa acknowledgement/uplink from receiver

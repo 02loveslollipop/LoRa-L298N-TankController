@@ -1,0 +1,160 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2880" height="1620" viewBox="0 0 2880 1620" role="img" aria-labelledby="diagram-title diagram-desc">
+<title id="diagram-title">Long-Range IoT Teleoperation System — AWS Deployment Architecture</title>
+<desc id="diagram-desc">AWS deployment view showing Elastic Beanstalk applications, ElastiCache Valkey streams, EC2 MediaMTX with Elastic IP and Security Group, S3 deployment bundles, and GitHub Actions and Terraform delivery paths.</desc>
+
+<defs>
+  <marker id="arrow-blue" viewBox="0 0 20 20" refX="17" refY="10" markerWidth="20" markerHeight="20" orient="auto" markerUnits="userSpaceOnUse"><path d="M 1 2 L 18 10 L 1 18 Z" fill="#2365C7"/></marker>
+  <marker id="arrow-teal" viewBox="0 0 20 20" refX="17" refY="10" markerWidth="20" markerHeight="20" orient="auto" markerUnits="userSpaceOnUse"><path d="M 1 2 L 18 10 L 1 18 Z" fill="#087F8C"/></marker>
+  <marker id="arrow-green" viewBox="0 0 20 20" refX="17" refY="10" markerWidth="20" markerHeight="20" orient="auto" markerUnits="userSpaceOnUse"><path d="M 1 2 L 18 10 L 1 18 Z" fill="#139B87"/></marker>
+  <marker id="arrow-amber" viewBox="0 0 20 20" refX="17" refY="10" markerWidth="20" markerHeight="20" orient="auto" markerUnits="userSpaceOnUse"><path d="M 1 2 L 18 10 L 1 18 Z" fill="#C87720"/></marker>
+  <marker id="arrow-deploy" viewBox="0 0 20 20" refX="17" refY="10" markerWidth="20" markerHeight="20" orient="auto" markerUnits="userSpaceOnUse"><path d="M 1 2 L 18 10 L 1 18 Z" fill="#D57C22"/></marker>
+</defs>
+<rect x="0" y="0" width="2880" height="1620" rx="0" fill="#F7F9FC" stroke="none" stroke-width="1"/>
+<rect x="80" y="75" width="12" height="102" rx="6" fill="#C76A21" stroke="none" stroke-width="1"/>
+<text x="112" y="128" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="68" font-weight="800" fill="#14263D">Long-Range IoT Teleoperation System</text>
+<text x="113" y="180" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="34" font-weight="600" fill="#52647A">AWS Deployment Architecture</text>
+<path d="M 2085 116 L 2155 116" fill="none" stroke="#2365C7" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="2177" y="125" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="27" font-weight="700" fill="#14263D">Runtime traffic</text>
+<path d="M 2438 116 L 2508 116" fill="none" stroke="#D57C22" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="16 10"/>
+<text x="2530" y="125" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="27" font-weight="700" fill="#14263D">Deployment</text>
+<rect x="80" y="262" width="580" height="1030" rx="28" fill="#FFFFFF" stroke="#D1DDE9" stroke-width="2"/>
+<rect x="108" y="288" width="58" height="54" rx="27.0" fill="#E8F0FC" stroke="#E8F0FC" stroke-width="0"/>
+<text x="137.0" y="324.8" text-anchor="middle" font-family="Lato, DejaVu Sans, sans-serif" font-size="28" font-weight="700" fill="#2365C7">E</text>
+<text x="187" y="327" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="30" font-weight="800" fill="#14263D">EXTERNAL / EDGE</text>
+<path d="M 108 356 L 632 356" fill="none" stroke="#E4EBF3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="112" y="406" width="470" height="160" rx="20" fill="#FFFFFF" stroke="#CBD8E6" stroke-width="2"/>
+<rect x="112" y="426" width="8" height="120" rx="4" fill="#2365C7" stroke="none" stroke-width="1"/>
+<text x="141" y="447" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="22" font-weight="800" fill="#2365C7" letter-spacing="1.4">OPERATOR</text>
+<text x="141" y="504" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="36" font-weight="800" fill="#14263D">Browser / Control UI</text>
+<text x="141" y="547" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="26" font-weight="400" fill="#52647A">Commands + live status</text>
+<rect x="112" y="680" width="470" height="160" rx="20" fill="#FFFFFF" stroke="#CBD8E6" stroke-width="2"/>
+<rect x="112" y="700" width="8" height="120" rx="4" fill="#C76A21" stroke="none" stroke-width="1"/>
+<text x="141" y="721" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="22" font-weight="800" fill="#C76A21" letter-spacing="1.4">LOCAL EDGE</text>
+<text x="141" y="778" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="37" font-weight="800" fill="#14263D">LoRa gateway</text>
+<text x="141" y="821" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="26" font-weight="400" fill="#52647A">LilyGO T-Beam / ESP32</text>
+<rect x="112" y="925" width="470" height="160" rx="20" fill="#FFFFFF" stroke="#CBD8E6" stroke-width="2"/>
+<rect x="112" y="945" width="8" height="120" rx="4" fill="#087F8C" stroke="none" stroke-width="1"/>
+<text x="141" y="966" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="22" font-weight="800" fill="#087F8C" letter-spacing="1.4">ON ROBOT</text>
+<text x="141" y="1023" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="37" font-weight="800" fill="#14263D">Radxa Rock 3C</text>
+<text x="141" y="1066" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="26" font-weight="400" fill="#52647A">RTSP camera uplink</text>
+<rect x="112" y="1115" width="470" height="165" rx="20" fill="#FFFFFF" stroke="#CBD8E6" stroke-width="2"/>
+<rect x="112" y="1135" width="8" height="125" rx="4" fill="#087F8C" stroke="none" stroke-width="1"/>
+<text x="141" y="1156" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="22" font-weight="800" fill="#087F8C" letter-spacing="1.4">OPERATOR</text>
+<text x="141" y="1213" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="34" font-weight="800" fill="#14263D">Browser playback</text>
+<text x="141" y="1256" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="26" font-weight="400" fill="#52647A">WebRTC / WHEP</text>
+<rect x="700" y="262" width="2100" height="1260" rx="28" fill="#FFFFFF" stroke="#BFCFDE" stroke-width="3"/>
+<rect x="728" y="288" width="92" height="54" rx="27.0" fill="#FFE9D5" stroke="#FFE9D5" stroke-width="0"/>
+<text x="774.0" y="324.45" text-anchor="middle" font-family="Lato, DejaVu Sans, sans-serif" font-size="27" font-weight="700" fill="#C76A21">AWS</text>
+<text x="841" y="327" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="30" font-weight="800" fill="#14263D">AWS CLOUD</text>
+<text x="2755" y="326" text-anchor="end" font-family="Lato, DejaVu Sans, sans-serif" font-size="25" font-weight="400" fill="#52647A">Runtime resources + deployment artifacts</text>
+<path d="M 728 356 L 2772 356" fill="none" stroke="#E4EBF3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="740" y="385" width="1160" height="490" rx="24" fill="#FFF9F3" stroke="#D1DDE9" stroke-width="2"/>
+<rect x="765" y="409" width="62" height="62" rx="14" fill="#C76A21" stroke="none" stroke-width="1"/>
+<text x="796" y="450" text-anchor="middle" font-family="Lato, DejaVu Sans, sans-serif" font-size="25" font-weight="900" fill="#FFFFFF">EB</text>
+<text x="845" y="451" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="34" font-weight="800" fill="#14263D">AWS Elastic Beanstalk</text>
+<rect x="776" y="478" width="506" height="155" rx="20" fill="#FFFFFF" stroke="#CBD8E6" stroke-width="2"/>
+<rect x="776" y="498" width="8" height="115" rx="4" fill="#C76A21" stroke="none" stroke-width="1"/>
+<text x="805" y="519" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="22" font-weight="800" fill="#C76A21" letter-spacing="1.4">APPLICATION</text>
+<text x="805" y="576" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="38" font-weight="800" fill="#14263D">Visual Controller</text>
+<text x="805" y="619" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="26" font-weight="400" fill="#52647A">API + browser WebSocket</text>
+<rect x="1356" y="478" width="506" height="155" rx="20" fill="#FFFFFF" stroke="#CBD8E6" stroke-width="2"/>
+<rect x="1356" y="498" width="8" height="115" rx="4" fill="#C76A21" stroke="none" stroke-width="1"/>
+<text x="1385" y="519" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="22" font-weight="800" fill="#C76A21" letter-spacing="1.4">APPLICATION</text>
+<text x="1385" y="576" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="38" font-weight="800" fill="#14263D">Control Broker</text>
+<text x="1385" y="619" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="26" font-weight="400" fill="#52647A">Commands + gateway WS</text>
+<rect x="776" y="678" width="506" height="155" rx="20" fill="#FFFFFF" stroke="#D7E0EA" stroke-width="2"/>
+<rect x="776" y="698" width="8" height="115" rx="4" fill="#A8B6C7" stroke="none" stroke-width="1"/>
+<text x="805" y="719" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="22" font-weight="800" fill="#A8B6C7" letter-spacing="1.4">SECONDARY SERVICE</text>
+<text x="805" y="776" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="34" font-weight="800" fill="#5C6D80">Stream Cleaner</text>
+<text x="805" y="819" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="26" font-weight="400" fill="#78899B">Stream retention</text>
+<rect x="1356" y="678" width="506" height="155" rx="20" fill="#FFFFFF" stroke="#D7E0EA" stroke-width="2"/>
+<rect x="1356" y="698" width="8" height="115" rx="4" fill="#A8B6C7" stroke="none" stroke-width="1"/>
+<text x="1385" y="719" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="22" font-weight="800" fill="#A8B6C7" letter-spacing="1.4">SECONDARY SERVICE</text>
+<text x="1385" y="776" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="34" font-weight="800" fill="#5C6D80">Telemetry Dashboard</text>
+<text x="1385" y="819" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="26" font-weight="400" fill="#78899B">Monitoring view</text>
+<rect x="1936" y="385" width="826" height="490" rx="24" fill="#FAF7FF" stroke="#D1DDE9" stroke-width="2"/>
+<rect x="1961" y="409" width="62" height="62" rx="14" fill="#7754B8" stroke="none" stroke-width="1"/>
+<text x="1992" y="450" text-anchor="middle" font-family="Lato, DejaVu Sans, sans-serif" font-size="25" font-weight="900" fill="#FFFFFF">V</text>
+<text x="2041" y="451" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="34" font-weight="800" fill="#14263D">Amazon ElastiCache / Valkey</text>
+<rect x="1980" y="500" width="738" height="115" rx="18" fill="#FFFFFF" stroke="#D9CDEC" stroke-width="2"/>
+<text x="2010" y="545" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="23" font-weight="800" fill="#7754B8" letter-spacing="1.1">REDIS STREAM</text>
+<text x="2010" y="589" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="37" font-weight="800" fill="#14263D">tank_commands</text>
+<rect x="1980" y="648" width="738" height="115" rx="18" fill="#FFFFFF" stroke="#D9CDEC" stroke-width="2"/>
+<text x="2010" y="693" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="23" font-weight="800" fill="#7754B8" letter-spacing="1.1">REDIS STREAM</text>
+<text x="2010" y="737" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="37" font-weight="800" fill="#14263D">tank_status</text>
+<text x="1980" y="807" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="23" font-weight="600" fill="#52647A">Commands: Visual Controller → Broker</text>
+<text x="1980" y="839" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="23" font-weight="600" fill="#52647A">Status: Broker → Visual Controller</text>
+<rect x="1550" y="924" width="1212" height="345" rx="24" fill="#FFF9F3" stroke="#D1DDE9" stroke-width="2"/>
+<rect x="1575" y="948" width="62" height="62" rx="14" fill="#C76A21" stroke="none" stroke-width="1"/>
+<text x="1606" y="989" text-anchor="middle" font-family="Lato, DejaVu Sans, sans-serif" font-size="21" font-weight="900" fill="#FFFFFF">EC2</text>
+<text x="1655" y="990" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="34" font-weight="800" fill="#14263D">Amazon EC2 · media relay</text>
+<rect x="1590" y="1012" width="700" height="155" rx="20" fill="#FFFFFF" stroke="#CBD8E6" stroke-width="2"/>
+<rect x="1590" y="1032" width="8" height="115" rx="4" fill="#C76A21" stroke="none" stroke-width="1"/>
+<text x="1619" y="1053" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="22" font-weight="800" fill="#C76A21" letter-spacing="1.4">CONTAINER</text>
+<text x="1619" y="1110" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="40" font-weight="800" fill="#14263D">MediaMTX</text>
+<text x="1619" y="1153" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="26" font-weight="400" fill="#52647A">RTSP ingest · WebRTC / HLS output</text>
+<rect x="2326" y="1012" width="396" height="155" rx="20" fill="#FFFFFF" stroke="#D8BFA5" stroke-width="2" stroke-dasharray="9 8"/>
+<text x="2355" y="1053" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="22" font-weight="800" fill="#C76A21" letter-spacing="1.2">OPTIONAL</text>
+<text x="2355" y="1105" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="36" font-weight="800" fill="#14263D">Caddy / TLS</text>
+<text x="2355" y="1148" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="24" font-weight="400" fill="#52647A">WHEP + HLS HTTP proxy</text>
+<rect x="1592" y="1193" width="364" height="53" rx="26.5" fill="#FFF0DF" stroke="#FFF0DF" stroke-width="0"/>
+<text x="1774.0" y="1228.25" text-anchor="middle" font-family="Lato, DejaVu Sans, sans-serif" font-size="25" font-weight="700" fill="#C76A21">EC2 Security Group</text>
+<rect x="1982" y="1193" width="251" height="53" rx="26.5" fill="#FFF0DF" stroke="#FFF0DF" stroke-width="0"/>
+<text x="2107.5" y="1228.25" text-anchor="middle" font-family="Lato, DejaVu Sans, sans-serif" font-size="25" font-weight="700" fill="#C76A21">Elastic IP</text>
+<text x="108" y="1342" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="24" font-weight="800" fill="#D57C22" letter-spacing="1.0">DELIVERY / IaC</text>
+<rect x="112" y="1350" width="287" height="155" rx="20" fill="#FFFFFF" stroke="#CBD8E6" stroke-width="2"/>
+<rect x="112" y="1370" width="8" height="115" rx="4" fill="#D57C22" stroke="none" stroke-width="1"/>
+<text x="141" y="1391" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="22" font-weight="800" fill="#D57C22" letter-spacing="1.4">CI / CD</text>
+<text x="141" y="1448" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="32" font-weight="800" fill="#14263D">GitHub Actions</text>
+<text x="141" y="1491" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="24" font-weight="400" fill="#52647A">Push + manual jobs</text>
+<rect x="429" y="1350" width="236" height="155" rx="20" fill="#FFFFFF" stroke="#CBD8E6" stroke-width="2"/>
+<rect x="429" y="1370" width="8" height="115" rx="4" fill="#D57C22" stroke="none" stroke-width="1"/>
+<text x="458" y="1391" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="22" font-weight="800" fill="#D57C22" letter-spacing="1.4">MEDIA IaC</text>
+<text x="458" y="1448" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="34" font-weight="800" fill="#14263D">Terraform</text>
+<text x="458" y="1491" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="22" font-weight="400" fill="#52647A">Manual dispatch</text>
+<rect x="780" y="1340" width="510" height="155" rx="24" fill="#FFF8F8" stroke="#D1DDE9" stroke-width="2"/>
+<rect x="805" y="1364" width="62" height="62" rx="14" fill="#C65353" stroke="none" stroke-width="1"/>
+<text x="836" y="1405" text-anchor="middle" font-family="Lato, DejaVu Sans, sans-serif" font-size="25" font-weight="900" fill="#FFFFFF">S3</text>
+<text x="885" y="1406" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="34" font-weight="800" fill="#14263D">Amazon S3</text>
+<text x="810" y="1469" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="26" font-weight="600" fill="#52647A">EB deployment bundles</text>
+<path d="M 399 1432 L 421 1432" fill="none" stroke="#D57C22" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="14 10"/>
+<polygon points="421,1432 403.0,1441.0 403.0,1423.0" fill="#D57C22"/>
+<path d="M 380 1350 L 380 1294 L 990 1294 L 990 1332" fill="none" stroke="#D57C22" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="14 10"/>
+<polygon points="990.0,1332.0 981.0,1314.0 999.0,1314.0" fill="#D57C22"/>
+<path d="M 1015 1340 L 1015 910 L 1035 910 L 1035 875" fill="none" stroke="#D57C22" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="14 10"/>
+<polygon points="1035.0,875.0 1044.0,893.0 1026.0,893.0" fill="#D57C22"/>
+<path d="M 665 1430 L 690 1430 L 690 1503 L 2184 1503 L 2184 1264" fill="none" stroke="#D57C22" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="14 10"/>
+<polygon points="2184.0,1264.0 2193.0,1282.0 2175.0,1282.0" fill="#D57C22"/>
+<rect x="817" y="1250" width="310" height="48" rx="24.0" fill="#FFF0DF" stroke="#FFF0DF" stroke-width="0"/>
+<text x="972.0" y="1282.05" text-anchor="middle" font-family="Lato, DejaVu Sans, sans-serif" font-size="23" font-weight="700" fill="#D57C22">EB bundles / versions</text>
+<rect x="1704" y="1432" width="332" height="48" rx="24.0" fill="#FFF0DF" stroke="#FFF0DF" stroke-width="0"/>
+<text x="1870.0" y="1464.05" text-anchor="middle" font-family="Lato, DejaVu Sans, sans-serif" font-size="23" font-weight="700" fill="#D57C22">Terraform provisions relay</text>
+<path d="M 582 549 L 783 549" fill="none" stroke="#2365C7" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+<polygon points="783,549 765.0,558.0 765.0,540.0" fill="#2365C7"/>
+<rect x="586" y="572" width="182" height="47" rx="23.5" fill="#E8F0FC" stroke="#E8F0FC" stroke-width="0"/>
+<text x="677.0" y="603.2" text-anchor="middle" font-family="Lato, DejaVu Sans, sans-serif" font-size="22" font-weight="700" fill="#2365C7">HTTPS / REST</text>
+<path d="M 1609 633 L 1609 666 L 610 666 L 610 759 L 575 759" fill="none" stroke="#2365C7" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+<polygon points="575.0,759.0 593.0,750.0 593.0,768.0" fill="#2365C7"/>
+<rect x="190" y="590" width="316" height="47" rx="23.5" fill="#E6F6F2" stroke="#E6F6F2" stroke-width="0"/>
+<text x="348.0" y="621.2" text-anchor="middle" font-family="Lato, DejaVu Sans, sans-serif" font-size="22" font-weight="700" fill="#139B87">Gateway status · WebSocket</text>
+<path d="M 1035 478 L 1035 466 L 1908 466 L 1908 557 L 1972 557" fill="none" stroke="#2365C7" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+<polygon points="1972.0,557.0 1954.0,566.0 1954.0,548.0" fill="#2365C7"/>
+<path d="M 1980 591 L 1858 591" fill="none" stroke="#2365C7" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+<polygon points="1858,591 1876.0,582.0 1876.0,600.0" fill="#2365C7"/>
+<path d="M 350 680 L 350 642 L 1320 642 L 1320 610 L 1363 610" fill="none" stroke="#139B87" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+<polygon points="1363.0,610.0 1345.0,619.0 1345.0,601.0" fill="#139B87"/>
+<path d="M 1862 615 L 1905 615 L 1905 706 L 1986 706" fill="none" stroke="#139B87" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+<polygon points="1986.0,706.0 1968.0,715.0 1968.0,697.0" fill="#139B87"/>
+<path d="M 1980 755 L 1900 755" fill="none" stroke="#139B87" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+<polygon points="1900,755 1918.0,746.0 1918.0,764.0" fill="#139B87"/>
+<path d="M 776 500 L 575 500" fill="none" stroke="#139B87" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+<polygon points="575,500 593.0,491.0 593.0,509.0" fill="#139B87"/>
+<path d="M 582 1038 L 1598 1089" fill="none" stroke="#087F8C" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+<polygon points="1598,1089 1579.571431191079,1097.0862755119317 1580.473838305102,1079.1089102600224" fill="#087F8C"/>
+<rect x="930" y="963" width="375" height="50" rx="25.0" fill="#E5F4F3" stroke="#E5F4F3" stroke-width="0"/>
+<text x="1117.5" y="996.4" text-anchor="middle" font-family="Lato, DejaVu Sans, sans-serif" font-size="24" font-weight="700" fill="#087F8C">RTSP / Internet · H.264</text>
+<path d="M 1780 1167 L 1780 1210 L 575 1210" fill="none" stroke="#087F8C" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+<polygon points="575.0,1210.0 593.0,1201.0 593.0,1219.0" fill="#087F8C"/>
+<rect x="920" y="1138" width="303" height="50" rx="25.0" fill="#E5F4F3" stroke="#E5F4F3" stroke-width="0"/>
+<text x="1071.5" y="1171.75" text-anchor="middle" font-family="Lato, DejaVu Sans, sans-serif" font-size="25" font-weight="700" fill="#087F8C">WebRTC / WHEP</text>
+</svg>

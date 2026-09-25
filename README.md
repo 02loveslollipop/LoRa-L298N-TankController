@@ -1,70 +1,22 @@
 ## Introduction
 
-This project provides a complete **IoT tank control system** combining embedded hardware control with cloud-based orchestration. The architecture spans from low-level motor control on **ESP32/ESP8266** platforms using dual **L298N** H-bridges, through **LoRa wireless communication** with **AES-256-CBC encryption**, up to cloud services for real-time command distribution and telemetry streaming.
+This project is an end-to-end teleoperation platform for a tracked robot. Browser commands pass through cloud services and Redis Streams, then a separate LilyGO T-Beam/ESP32 WebSocket-to-LoRa gateway sends encrypted control frames to the robot's ESP32 receiver and L298N motor driver. A Radxa Rock 3C sends H.264 camera video through an independent RTSP uplink to a MediaMTX relay on EC2; the browser uses WebRTC/WHEP playback. The LoRa control link was field-tested at approximately 1.5 km.
 
-The system uses **Redis Streams** as the event backbone, enabling multiple services to coordinate tank control, telemetry broadcasting, and web-based monitoring through a modern microservices architecture deployed on **AWS Elastic Beanstalk**.
+The Control Broker, Visual Controller, Stream Cleaner, and Telemetry Dashboard are deployed to AWS Elastic Beanstalk. Amazon ElastiCache/Valkey hosts the Redis-compatible event streams. GitHub Actions deploys the application services, while Terraform provisions the EC2 media relay infrastructure.
 
 ---
 
 ## System Architecture
 
-### Hardware Layer (RX - Tank Receiver)
-- **ESP32/ESP8266** microcontroller running the tank firmware
-- **L298N Dual H-Bridge** for motor control with PWM speed regulation
-- **LoRa transceiver** (SX1276/SX1278) for long-range wireless communication
-- **TankShift** C++ library providing smooth motor ramping and tank-style movement
-- **AES-256-CBC encryption** for secure command reception
-- Connects to WiFi and establishes **WebSocket** connection to Control Broker
+![End-to-end system architecture](docs/architecture/rendered/system-architecture.svg)
 
-### Communication Layer (TX - LoRa Gateway)
-- **LoRa Transmitter** device with physical controls or web interface
-- **AES-256-CBC encryption** matching receiver configuration
-- Optional standalone operation or integration with cloud services
-- Provides REST endpoint (`/cmd`) for remote command injection
+**Command path:** Browser → Visual Controller REST API → Redis `tank_commands` → Control Broker → WebSocket → local LilyGO gateway → LoRa → robot ESP32 receiver → L298N → left/right motors.
 
-### Cloud Services Layer
+**Status path:** The gateway reports its state over WebSocket → Control Broker → Redis `tank_status` → Visual Controller → browser UI WebSocket. The receiver does not send a LoRa acknowledgement.
 
-#### Control Broker Service
-**WebSocket Gateway** managing real-time tank connections:
-- Maintains persistent WebSocket connections with tank devices
-- Receives commands from Redis `tank_commands` stream
-- Routes commands to appropriate tank via WebSocket
-- Publishes tank status updates to Redis `tank_status` stream
-- Accepts radar sensor feeds on `/ws/radar/source/{source_id}`
-- Rebroadcasts radar data to listeners at `/ws/radar/listener`
-- Stores radar sweeps to Redis `tank_radar` stream
-- Handles connection lifecycle (registration, heartbeat, disconnection)
-- Deployed on AWS Elastic Beanstalk
+**Video path:** USB camera → Radxa Rock 3C → FFmpeg/H.264 → RTSP over the Internet → MediaMTX on EC2 → WebRTC/WHEP browser playback. Video does not pass through the control broker or LoRa gateway.
 
-#### Visual Controller Service
-**Web UI and REST Gateway** for human operators:
-- Provides interactive browser-based controller interface
-- REST API for command submission (`POST /command/{tank_id}`)
-- Writes commands to Redis `tank_commands` stream
-- Subscribes to Redis `tank_status` stream for telemetry
-- WebSocket endpoint (`/ws/ui/{tank_id}`) for real-time UI updates
-- Deployed on AWS Elastic Beanstalk
-
-#### Event Streamer (Redis Streams)
-**Distributed message backbone** using **AWS ElastiCache (Valkey)**:
-- `tank_commands` stream: Command queue from UI to tanks
-- `tank_status` stream: Telemetry flow from tanks to monitoring clients
-- Provides durability, ordering, and fan-out capabilities
-- Enables decoupled service communication
-- TLS encryption (rediss://) for secure data transport
-
-### Data Flow
-
-```
-[Tank Device (RX)] ←→ WebSocket ←→ [Control Broker] ←→ Redis Streams ←→ [Visual Controller] ←→ HTTP/WS ←→ [Browser UI]
-         ↑                                                       ↑
-    LoRa (encrypted)                                    Commands/Telemetry
-         ↑                                                       ↓
-  [LoRa Transmitter (TX)]                              [Redis Streams (Valkey)]
-```
-
-**Command Path**: Browser → Visual Controller → Redis `tank_commands` → Control Broker → WebSocket → Tank Device  
-**Telemetry Path**: Tank Device → WebSocket → Control Broker → Redis `tank_status` → Visual Controller → Browser
+The [end-to-end diagram](docs/architecture/rendered/system-architecture.svg) is the general project view. See the [AWS deployment diagram](docs/architecture/rendered/aws-deployment.svg), [command sequence](docs/architecture/command-sequence.mmd), and [architecture notes](docs/architecture/README.md) for deployment details, evidence, and regeneration steps. Optional radar/GPS/environmental telemetry uses a separate source and `tank_radar` stream.
 
 
 ---
@@ -75,37 +27,37 @@ The system uses **Redis Streams** as the event backbone, enabling multiple servi
 - **Dual Motor Control**: Independent PWM speed regulation (0-255) per motor
 - **Smooth Transitions**: Configurable ramping between speed changes
 - **Tank-Style Movement**: Forward, backward, pivot left/right, gradual turns
-- **TankShift Library**: Platform-independent C++ API for ESP8266/ESP32
-- **Ultrasonic Radar**: HC-SR04 sensor on SG90 servo for 180° environment scanning
-- **Real-Time Telemetry**: Radar sweep data streamed via WebSocket to Control Broker
+- **TankShift Library**: C++ PWM ramping and tank-style movement on the ESP32 receiver
+- **Optional Ultrasonic Radar**: Separate HC-SR04/SG90 source for environment scanning
+- **Optional Sensor Feed**: Radar, GPS, and environmental data use a separate broker path
 
 ### Secure Communication
 - **AES-256-CBC Encryption**: All LoRa commands encrypted end-to-end
-- **CRC32 Validation**: Ensures data integrity across wireless transmission
-- **Sequence Tracking**: Prevents replay attacks and duplicate command processing
+- **CRC32 Validation**: Detects corrupted control frames
+- **Sequence Tracking**: Suppresses duplicate sequence values at the receiver
 - **Magic Header & Version Control**: Validates protocol compatibility
-- **TLS/SSL**: Secure Redis connections (rediss://) for cloud communication
+- **Redis TLS Support**: Cloud clients can use a `rediss://` connection
 
 ### LoRa Wireless Control
-- **Long-Range Operation**: Control tanks from hundreds of meters away
+- **Long-Range Operation**: Field-tested at approximately 1.5 km
 - **Low Latency**: Fast command execution for responsive control
-- **Frequency Options**: 433 MHz, 868 MHz, or 915 MHz regional support
+- **Frequency Configuration**: Set the radio frequency for the deployed hardware and region
 - **Adjustable Parameters**: Configurable spread factor, bandwidth, and transmit power
 
 ### Cloud Architecture
 - **Microservices Design**: Decoupled Control Broker and Visual Controller services
-- **Redis Streams**: Durable, ordered message queues with fan-out capabilities
-- **WebSocket Gateway**: Real-time bidirectional communication with hardware
+- **Redis Streams**: Buffered command and status events between cloud services
+- **WebSocket-to-LoRa Gateway**: Separate LilyGO T-Beam/ESP32 device connecting cloud control to radio
 - **REST API**: Simple HTTP interface for command submission
-- **Elastic Beanstalk Deployment**: Auto-scaling, load balancing, health monitoring
+- **Elastic Beanstalk Deployment**: Four application services deployed by GitHub Actions
 - **AWS ElastiCache (Valkey)**: Managed Redis-compatible event backbone
 
 ### 🔧 Shared Protocol Library
 The `ControlProtocol.h` header provides a standardized communication framework:
-- **Platform-Independent**: Works across ESP8266, ESP32, and Arduino-compatible boards
+- **Shared Firmware Protocol**: Used by the current ESP32 gateway and receiver builds
 - **Compact Frame Format**: 16-byte encrypted packets minimize bandwidth
 - **Command Set**: Stop, Forward, Backward, Left, Right, SetSpeed
-- **Easy Integration**: Include once, use everywhere
+- **Frame Validation**: Version, magic value, and CRC32 in the shared header; the receiver also suppresses duplicate sequences
 
 ---
 
@@ -123,11 +75,7 @@ The **L298N** exposes two identical H bridges. Each side needs:
 The helper class toggles those pins directly and drives the enable lines with PWM, ramping between targets so direction changes feel smooth.
 
 ### LoRa Transceiver Module
-Supports common LoRa modules (SX1276/SX1278-based):
-- **Frequency**: 433 MHz, 868 MHz, or 915 MHz depending on region
-- **Spread Factor**: Configurable for range vs. speed tradeoff
-- **Bandwidth**: Adjustable based on interference environment
-- **Output Power**: Configurable transmission power
+The current gateway and receiver builds use the LilyGO T-Beam's integrated LoRa radio. Configure frequency, spread factor, bandwidth, and transmit power for the deployed radio hardware and region in both firmware builds.
 
 ---
 
@@ -143,29 +91,22 @@ Supports common LoRa modules (SX1276/SX1278-based):
 
 ### Motor Controller (Receiver)
 
-| Signal                      | L298N Pin | ESP8266 Pin | ESP32 (LilyGO) Pin |
-|-----------------------------|-----------|-------------|--------------------|
-| Motor A PWM                 | ENA       | D7          | 25                 |
-| Motor A Direction control 1 | IN1       | D2          | 22                 |
-| Motor A Direction control 2 | IN2       | D1          | 21                 |
-| Motor B PWM                 | ENB       | D8          | 14                 |
-| Motor B Direction control 1 | IN3       | D5          | 13                 |
-| Motor B Direction control 2 | IN4       | D6          | 15                 |
+| Signal | L298N pin | Robot ESP32 GPIO |
+| --- | --- | --- |
+| Left motor PWM | ENA | 25 |
+| Left direction 1 | IN1 | 22 |
+| Left direction 2 | IN2 | 21 |
+| Right motor PWM | ENB | 14 |
+| Right direction 1 | IN3 | 15 |
+| Right direction 2 | IN4 | 13 |
 
 ### LoRa Module Connections
 
-| LoRa Pin | ESP8266 Pin | ESP32 Pin | Description    |
-|----------|-------------|-----------|----------------|
-| SCK      | D5 (GPIO14) | GPIO18    | SPI Clock      |
-| MISO     | D6 (GPIO12) | GPIO19    | SPI Data In    |
-| MOSI     | D7 (GPIO13) | GPIO23    | SPI Data Out   |
-| NSS/CS   | D8 (GPIO15) | GPIO5     | Chip Select    |
-| RST      | D0 (GPIO16) | GPIO14    | Reset          |
-| DIO0     | D1 (GPIO5)  | GPIO26    | Interrupt Pin  |
+The current gateway and receiver target LilyGO T-Beam ESP32 boards with integrated radio wiring. Board-specific radio pins are selected in `tx_websocket_gateway/utilities.h` and `rx_driver/utilities.h`; the generic ESP8266 pin map previously shown here does not describe these builds.
 
 ### Ultrasonic Radar Module Connections
 
-The ultrasonic radar system uses an HC-SR04 ultrasonic sensor mounted on an SG90 servo for scanning:
+The optional, separate ultrasonic radar source uses an HC-SR04 sensor mounted on an SG90 servo for scanning:
 
 | Component | Pin  | ESP32 Default | ESP8266 Default | Notes                                          |
 |-----------|------|---------------|-----------------|------------------------------------------------|
@@ -185,43 +126,36 @@ Power the logic side with 5 V, feed the motor supply (7–12 V typical) to `VCC`
 
 ## Network Setup
 
-### Tank Receiver (RX) Configuration
-On boot, the receiver firmware:
-1. Creates a SoftAP named `TankController` (password `tank12345`)
-2. Starts web server at `http://192.168.4.1` with manual control interface
-3. Connects to configured WiFi network (if credentials provided)
-4. Establishes WebSocket connection to Control Broker service
-5. Registers tank ID and begins heartbeat transmission
-6. Exposes REST endpoint at `/cmd` for local command injection
+### Robot Receiver (RX)
+
+`rx_driver/rx_driver.ino` listens for LoRa control frames, validates/decrypts them, and drives the L298N through `TankShift`. It has a serial-control fallback; it does not connect to WiFi or the Control Broker.
+
+### Local WebSocket-to-LoRa Gateway
+
+`tx_websocket_gateway/tx_websocket_gateway.ino` connects to WiFi, opens a WebSocket client connection to the broker's `/ws/tank/{tank_id}` endpoint, converts command JSON to encrypted LoRa frames, and reports gateway state back over the same WebSocket. Configure its connection settings in `tx_websocket_gateway/config.h` without publishing network credentials.
 
 ### Control Broker Service
-WebSocket gateway deployed on AWS Elastic Beanstalk:
-- Listens for tank WebSocket connections on `/ws/tank/{tank_id}`
+Cloud service deployed on AWS Elastic Beanstalk:
+- Accepts gateway WebSocket connections on `/ws/tank/{tank_id}`
 - Accepts radar sensor feeds on `/ws/radar/source/{source_id}` and rebroadcasts to `/ws/radar/listener`
 - Subscribes to Redis `tank_commands` stream
-- Routes commands to connected tanks
-- Publishes telemetry to Redis `tank_status` stream
+- Routes commands to connected gateways
+- Publishes gateway status to Redis `tank_status` stream
 - Stores radar sweeps to Redis `tank_radar` stream for downstream consumers
 - Health check endpoint at `/health`
 - Environment variables: `REDIS_URL`, `REDIS_COMMAND_STREAM`, `REDIS_STATUS_STREAM`, `REDIS_STATUS_MAXLEN`, `REDIS_RADAR_STREAM`, `REDIS_RADAR_MAXLEN`
 
 ### Visual Controller Service
 Web UI service deployed on AWS Elastic Beanstalk:
-- Provides browser interface at `/controller/{tank_id}`
+- Serves the controller and status pages (`/legacy`, `/nt`, `/joycon`, `/status` in the frontend router)
 - REST API at `POST /command/{tank_id}` for command submission
-- WebSocket endpoint at `/ws/ui/{tank_id}` for real-time telemetry
+- WebSocket endpoint at `/ws/ui/{tank_id}` for real-time gateway status
 - Publishes commands to Redis `tank_commands` stream
 - Subscribes to Redis `tank_status` stream
 - Environment variables: `REDIS_URL`, `REDIS_COMMAND_STREAM`, `REDIS_STATUS_STREAM`
 
 ### Redis Event Backbone
-AWS ElastiCache (Valkey) provides:
-- Stream-based message queuing
-- Automatic message TTL and stream trimming
-- TLS-encrypted connections (rediss://)
-- High availability and durability
-- Consumer groups for scalability
-- Streams in use: `tank_commands`, `tank_status`, `tank_radar`
+The application uses an AWS ElastiCache/Valkey-compatible Redis endpoint for `tank_commands` and `tank_status`. The optional radar source uses `tank_radar`. Broker and Visual Controller code read with `XREAD`; the Stream Cleaner service trims configured streams. Redis TLS depends on the configured `REDIS_URL` scheme. This repository does not provision ElastiCache.
 
 ---
 
@@ -229,21 +163,16 @@ AWS ElastiCache (Valkey) provides:
 
 ### Hardware Setup
 1. Install required Arduino libraries via Library Manager
-2. Update encryption keys in `common/ControlProtocol.h`
-3. Configure LoRa frequency and parameters for your region
-4. Flash receiver sketch to ESP32/ESP8266 on tank
-5. Flash transmitter sketch to remote LoRa controller
-6. Configure WiFi credentials in receiver firmware
-7. Test WebSocket connection to Control Broker
+2. Configure matching control-frame secrets and LoRa parameters for both ESP32 devices
+3. Flash `rx_driver/rx_driver.ino` to the robot's LilyGO T-Beam/ESP32
+4. Configure WiFi and broker settings for `tx_websocket_gateway/tx_websocket_gateway.ino`, then flash the separate gateway
+5. Verify gateway WebSocket connection and LoRa command reception before driving the motors
 
 ### Cloud Services Setup
-1. Create AWS ElastiCache (Valkey) instance with TLS enabled
-2. Package services using `package.ps1` script
-3. Deploy `control-broker-*.zip` to Elastic Beanstalk environment
-4. Deploy `visual-controller-*.zip` to separate Elastic Beanstalk environment
-5. Configure `REDIS_URL` environment variable with `rediss://` connection string
-6. Verify health endpoints respond correctly
-7. Test end-to-end command flow from browser to tank
+1. Provide a Redis-compatible Valkey endpoint and configure `REDIS_URL` for the cloud services
+2. Use `.github/workflows/deploy.yaml`: pushes to `main` package and deploy the four Elastic Beanstalk services through S3
+3. Use the workflow's manual dispatch to run Terraform for the EC2 MediaMTX relay infrastructure
+4. Configure the Radxa streamer and browser WHEP endpoint for the relay, then verify command and video paths separately
 
 ---
 
@@ -251,11 +180,10 @@ AWS ElastiCache (Valkey) provides:
 
 ### Hardware (Arduino/PlatformIO)
 - **Arduino LoRa library** by Sandeep Mistry
-- **mbedTLS** (included with ESP8266/ESP32 cores)
-- **ESP8266WiFi** or **WiFi** (ESP32) for network connectivity
-- **WebSocketsClient** for Control Broker connection
+- **mbedTLS** in the ESP32 core for control-frame encryption
+- **WiFi** and **ArduinoWebsockets** on the gateway
 - **TankShift** motor control library (included)
-- **ArduinoJson** for command parsing
+- **ArduinoJson** for gateway command/status messages
 
 ### Cloud Services (Python)
 - **FastAPI** - Async web framework
@@ -270,16 +198,13 @@ AWS ElastiCache (Valkey) provides:
 
 ### Quick Start (Hardware)
 1. Install Arduino dependencies
-2. Update `ControlProtocol.h` with encryption keys
-3. Configure WiFi credentials in receiver firmware
-4. Set Control Broker WebSocket URL in firmware
-5. Flash firmware to devices
-6. Power up and verify WebSocket connection
+2. Configure matching LoRa protocol settings on gateway and receiver
+3. Configure gateway WiFi and broker connection settings
+4. Flash the separate receiver and gateway firmware builds to their ESP32 boards
+5. Power up and verify the gateway WebSocket and receiver LoRa control path
 
 ### Quick Start (Cloud)
-1. Set up AWS ElastiCache (Valkey) with TLS
-2. Run `.\package.ps1` to create deployment packages
-3. Deploy both services to Elastic Beanstalk
-4. Configure `REDIS_URL` environment variables
-5. Access Visual Controller web interface
-6. Test command transmission to connected tanks
+1. Configure the cloud services with an ElastiCache/Valkey-compatible `REDIS_URL`
+2. Deploy the four application services with the GitHub Actions workflow
+3. Provision the EC2 media relay with the workflow's manual Terraform job
+4. Access the Visual Controller and test command, gateway status, and video paths

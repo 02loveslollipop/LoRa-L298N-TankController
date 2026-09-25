@@ -1,0 +1,169 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2880" height="1620" viewBox="0 0 2880 1620" role="img" aria-labelledby="diagram-title diagram-desc">
+<title id="diagram-title">Long-Range IoT Teleoperation System — End-to-End Architecture</title>
+<desc id="diagram-desc">Browser commands use a cloud Redis and WebSocket control path, a separate LoRa gateway, and the robot motor driver. Gateway status returns through Redis. Robot video uses a Radxa to MediaMTX RTSP path and WebRTC browser playback.</desc>
+
+<defs>
+  <marker id="arrow-blue" viewBox="0 0 20 20" refX="17" refY="10" markerWidth="20" markerHeight="20" orient="auto" markerUnits="userSpaceOnUse"><path d="M 1 2 L 18 10 L 1 18 Z" fill="#2365C7"/></marker>
+  <marker id="arrow-teal" viewBox="0 0 20 20" refX="17" refY="10" markerWidth="20" markerHeight="20" orient="auto" markerUnits="userSpaceOnUse"><path d="M 1 2 L 18 10 L 1 18 Z" fill="#087F8C"/></marker>
+  <marker id="arrow-green" viewBox="0 0 20 20" refX="17" refY="10" markerWidth="20" markerHeight="20" orient="auto" markerUnits="userSpaceOnUse"><path d="M 1 2 L 18 10 L 1 18 Z" fill="#139B87"/></marker>
+  <marker id="arrow-amber" viewBox="0 0 20 20" refX="17" refY="10" markerWidth="20" markerHeight="20" orient="auto" markerUnits="userSpaceOnUse"><path d="M 1 2 L 18 10 L 1 18 Z" fill="#C87720"/></marker>
+  <marker id="arrow-deploy" viewBox="0 0 20 20" refX="17" refY="10" markerWidth="20" markerHeight="20" orient="auto" markerUnits="userSpaceOnUse"><path d="M 1 2 L 18 10 L 1 18 Z" fill="#D57C22"/></marker>
+</defs>
+<rect x="0" y="0" width="2880" height="1620" rx="0" fill="#F7F9FC" stroke="none" stroke-width="1"/>
+<rect x="80" y="75" width="12" height="102" rx="6" fill="#2365C7" stroke="none" stroke-width="1"/>
+<text x="112" y="128" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="68" font-weight="800" fill="#14263D">Long-Range IoT Teleoperation System</text>
+<text x="113" y="180" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="34" font-weight="600" fill="#52647A">End-to-End Architecture</text>
+<path d="M 2050 116 L 2122 116" fill="none" stroke="#2365C7" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="2144" y="125" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="27" font-weight="700" fill="#14263D">Command / control</text>
+<path d="M 2445 116 L 2517 116" fill="none" stroke="#087F8C" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="2539" y="125" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="27" font-weight="700" fill="#14263D">Video / media</text>
+<rect x="80" y="262" width="450" height="1220" rx="28" fill="#FFFFFF" stroke="#D2DDE9" stroke-width="2"/>
+<rect x="108" y="289" width="50" height="50" rx="25.0" fill="#EAF1FB" stroke="#EAF1FB" stroke-width="0"/>
+<text x="133.0" y="323.45" text-anchor="middle" font-family="Lato, DejaVu Sans, sans-serif" font-size="27" font-weight="700" fill="#2365C7">A</text>
+<text x="175" y="326" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="27" font-weight="800" fill="#14263D" letter-spacing="0.6">REMOTE OPERATOR</text>
+<path d="M 108 355 L 502 355" fill="none" stroke="#E4EBF3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="560" y="262" width="1055" height="1220" rx="28" fill="#FFFFFF" stroke="#D2DDE9" stroke-width="2"/>
+<rect x="588" y="289" width="50" height="50" rx="25.0" fill="#EAF1FB" stroke="#EAF1FB" stroke-width="0"/>
+<text x="613.0" y="323.45" text-anchor="middle" font-family="Lato, DejaVu Sans, sans-serif" font-size="27" font-weight="700" fill="#2365C7">B</text>
+<text x="655" y="326" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="29" font-weight="800" fill="#14263D" letter-spacing="0.6">AWS / CLOUD CONTROL</text>
+<path d="M 588 355 L 1587 355" fill="none" stroke="#E4EBF3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="1645" y="262" width="450" height="1220" rx="28" fill="#FFFFFF" stroke="#D2DDE9" stroke-width="2"/>
+<rect x="1673" y="289" width="50" height="50" rx="25.0" fill="#EAF1FB" stroke="#EAF1FB" stroke-width="0"/>
+<text x="1698.0" y="323.45" text-anchor="middle" font-family="Lato, DejaVu Sans, sans-serif" font-size="27" font-weight="700" fill="#2365C7">C</text>
+<text x="1740" y="326" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="23" font-weight="800" fill="#14263D" letter-spacing="0.6">LOCAL LORA GATEWAY</text>
+<path d="M 1673 355 L 2067 355" fill="none" stroke="#E4EBF3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="2125" y="262" width="675" height="1220" rx="28" fill="#FFFFFF" stroke="#D2DDE9" stroke-width="2"/>
+<rect x="2153" y="289" width="50" height="50" rx="25.0" fill="#EAF1FB" stroke="#EAF1FB" stroke-width="0"/>
+<text x="2178.0" y="323.45" text-anchor="middle" font-family="Lato, DejaVu Sans, sans-serif" font-size="27" font-weight="700" fill="#2365C7">D</text>
+<text x="2220" y="326" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="29" font-weight="800" fill="#14263D" letter-spacing="0.6">MOBILE ROBOT</text>
+<path d="M 2153 355 L 2772 355" fill="none" stroke="#E4EBF3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="108" y="376" width="366" height="48" rx="24.0" fill="#E7F0FE" stroke="#E7F0FE" stroke-width="0"/>
+<text x="291.0" y="408.4" text-anchor="middle" font-family="Lato, DejaVu Sans, sans-serif" font-size="24" font-weight="700" fill="#2365C7">COMMAND / CONTROL PLANE</text>
+<rect x="112" y="438" width="386" height="170" rx="20" fill="#FFFFFF" stroke="#CBD8E6" stroke-width="2"/>
+<rect x="112" y="458" width="8" height="130" rx="4" fill="#2365C7" stroke="none" stroke-width="1"/>
+<text x="141" y="479" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="22" font-weight="800" fill="#2365C7" letter-spacing="1.4">OPERATOR</text>
+<text x="141" y="536" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="34" font-weight="800" fill="#14263D">Browser / Control UI</text>
+<text x="141" y="579" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="26" font-weight="400" fill="#52647A">Commands + live status</text>
+<rect x="590" y="438" width="280" height="170" rx="20" fill="#FFFFFF" stroke="#CBD8E6" stroke-width="2"/>
+<rect x="590" y="458" width="8" height="130" rx="4" fill="#2365C7" stroke="none" stroke-width="1"/>
+<text x="619" y="479" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="22" font-weight="800" fill="#2365C7" letter-spacing="1.4">WEB SERVICE</text>
+<text x="619" y="536" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="34" font-weight="800" fill="#14263D">Visual Controller</text>
+<text x="619" y="579" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="24" font-weight="400" fill="#52647A">REST + UI WebSocket</text>
+<rect x="942" y="438" width="290" height="170" rx="20" fill="#FFFFFF" stroke="#CBD8E6" stroke-width="2"/>
+<rect x="942" y="458" width="8" height="130" rx="4" fill="#7259BC" stroke="none" stroke-width="1"/>
+<text x="971" y="479" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="22" font-weight="800" fill="#7259BC" letter-spacing="1.4">EVENT BUS</text>
+<text x="971" y="536" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="35" font-weight="800" fill="#14263D">Redis Streams</text>
+<text x="971" y="579" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="26" font-weight="400" fill="#52647A">ElastiCache / Valkey</text>
+<rect x="1304" y="438" width="280" height="170" rx="20" fill="#FFFFFF" stroke="#CBD8E6" stroke-width="2"/>
+<rect x="1304" y="458" width="8" height="130" rx="4" fill="#2365C7" stroke="none" stroke-width="1"/>
+<text x="1333" y="479" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="22" font-weight="800" fill="#2365C7" letter-spacing="1.4">WEB SERVICE</text>
+<text x="1333" y="536" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="34" font-weight="800" fill="#14263D">Control Broker</text>
+<text x="1333" y="579" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="26" font-weight="400" fill="#52647A">Stream reader + WS</text>
+<rect x="1675" y="438" width="390" height="170" rx="20" fill="#FFFFFF" stroke="#CBD8E6" stroke-width="2"/>
+<rect x="1675" y="458" width="8" height="130" rx="4" fill="#C87720" stroke="none" stroke-width="1"/>
+<text x="1704" y="479" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="22" font-weight="800" fill="#C87720" letter-spacing="1.4">LOCAL EDGE</text>
+<text x="1704" y="536" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="36" font-weight="800" fill="#14263D">LilyGO T-Beam</text>
+<text x="1704" y="579" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="25" font-weight="400" fill="#52647A">ESP32 · WS client · LoRa TX</text>
+<rect x="2152" y="438" width="270" height="170" rx="20" fill="#FFFFFF" stroke="#CBD8E6" stroke-width="2"/>
+<rect x="2152" y="458" width="8" height="130" rx="4" fill="#C87720" stroke="none" stroke-width="1"/>
+<text x="2181" y="479" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="22" font-weight="800" fill="#C87720" letter-spacing="1.4">ON ROBOT</text>
+<text x="2181" y="536" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="34" font-weight="800" fill="#14263D">LoRa receiver</text>
+<text x="2181" y="579" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="26" font-weight="400" fill="#52647A">LilyGO / ESP32</text>
+<rect x="2482" y="438" width="290" height="170" rx="20" fill="#FFFFFF" stroke="#CBD8E6" stroke-width="2"/>
+<rect x="2482" y="458" width="8" height="130" rx="4" fill="#C87720" stroke="none" stroke-width="1"/>
+<text x="2511" y="479" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="22" font-weight="800" fill="#C87720" letter-spacing="1.4">DRIVE</text>
+<text x="2511" y="536" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="35" font-weight="800" fill="#14263D">L298N driver</text>
+<text x="2511" y="579" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="26" font-weight="400" fill="#52647A">PWM + direction</text>
+<rect x="2482" y="661" width="290" height="170" rx="20" fill="#FFFFFF" stroke="#CBD8E6" stroke-width="2"/>
+<rect x="2482" y="681" width="8" height="130" rx="4" fill="#C87720" stroke="none" stroke-width="1"/>
+<text x="2511" y="702" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="22" font-weight="800" fill="#C87720" letter-spacing="1.4">ACTUATORS</text>
+<text x="2511" y="759" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="30" font-weight="800" fill="#14263D">Left + right motors</text>
+<text x="2511" y="802" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="26" font-weight="400" fill="#52647A">Tracked drive</text>
+<path d="M 498 523 L 583 523" fill="none" stroke="#2365C7" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+<polygon points="583,523 565.0,532.0 565.0,514.0" fill="#2365C7"/>
+<path d="M 870 523 L 935 523" fill="none" stroke="#2365C7" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+<polygon points="935,523 917.0,532.0 917.0,514.0" fill="#2365C7"/>
+<path d="M 1232 523 L 1297 523" fill="none" stroke="#2365C7" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+<polygon points="1297,523 1279.0,532.0 1279.0,514.0" fill="#2365C7"/>
+<path d="M 1584 523 L 1668 523" fill="none" stroke="#2365C7" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+<polygon points="1668,523 1650.0,532.0 1650.0,514.0" fill="#2365C7"/>
+<path d="M 2065 523 L 2144 523" fill="none" stroke="#C87720" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+<polygon points="2144,523 2126.0,532.0 2126.0,514.0" fill="#C87720"/>
+<path d="M 2422 523 L 2474 523" fill="none" stroke="#C87720" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+<polygon points="2474,523 2456.0,532.0 2456.0,514.0" fill="#C87720"/>
+<path d="M 2627 608 L 2627 653" fill="none" stroke="#C87720" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+<polygon points="2627,653 2618.0,635.0 2636.0,635.0" fill="#C87720"/>
+<rect x="452" y="627" width="230" height="50" rx="25.0" fill="#E7F0FE" stroke="#E7F0FE" stroke-width="0"/>
+<text x="567.0" y="660.75" text-anchor="middle" font-family="Lato, DejaVu Sans, sans-serif" font-size="25" font-weight="700" fill="#2365C7">HTTPS / REST</text>
+<rect x="884" y="627" width="407" height="50" rx="25.0" fill="#E7F0FE" stroke="#E7F0FE" stroke-width="0"/>
+<text x="1087.5" y="660.75" text-anchor="middle" font-family="Lato, DejaVu Sans, sans-serif" font-size="25" font-weight="700" fill="#2365C7">Redis Streams · commands</text>
+<rect x="1530" y="627" width="205" height="50" rx="25.0" fill="#E7F0FE" stroke="#E7F0FE" stroke-width="0"/>
+<text x="1632.5" y="660.75" text-anchor="middle" font-family="Lato, DejaVu Sans, sans-serif" font-size="25" font-weight="700" fill="#2365C7">WebSocket</text>
+<rect x="2057" y="627" width="112" height="50" rx="25.0" fill="#FFF1DE" stroke="#FFF1DE" stroke-width="0"/>
+<text x="2113.0" y="661.1" text-anchor="middle" font-family="Lato, DejaVu Sans, sans-serif" font-size="26" font-weight="700" fill="#C87720">LoRa</text>
+<rect x="1968" y="688" width="290" height="52" rx="26.0" fill="#FFF1DE" stroke="#FFF1DE" stroke-width="0"/>
+<text x="2113.0" y="722.4" text-anchor="middle" font-family="Lato, DejaVu Sans, sans-serif" font-size="24" font-weight="700" fill="#C87720">Field-tested ~1.5 km</text>
+<rect x="108" y="759" width="1972" height="174" rx="21" fill="#F0FBF8" stroke="#9AD9CC" stroke-width="2"/>
+<text x="132" y="798" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="25" font-weight="800" fill="#139B87" letter-spacing="1.2">GATEWAY STATUS RETURN</text>
+<text x="760" y="798" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="25" font-weight="600" fill="#52647A">WebSocket → tank_status → UI WebSocket</text>
+<rect x="132" y="817" width="290" height="61" rx="30.5" fill="#FFFFFF" stroke="#A7DCD0" stroke-width="2"/>
+<text x="277.0" y="856.25" text-anchor="middle" font-family="Lato, DejaVu Sans, sans-serif" font-size="25" font-weight="700" fill="#167C6D">Browser</text>
+<rect x="493" y="817" width="290" height="61" rx="30.5" fill="#FFFFFF" stroke="#A7DCD0" stroke-width="2"/>
+<text x="638.0" y="856.25" text-anchor="middle" font-family="Lato, DejaVu Sans, sans-serif" font-size="25" font-weight="700" fill="#167C6D">Visual Controller</text>
+<rect x="853" y="817" width="290" height="61" rx="30.5" fill="#FFFFFF" stroke="#A7DCD0" stroke-width="2"/>
+<text x="998.0" y="856.25" text-anchor="middle" font-family="Lato, DejaVu Sans, sans-serif" font-size="25" font-weight="700" fill="#167C6D">tank_status</text>
+<rect x="1213" y="817" width="290" height="61" rx="30.5" fill="#FFFFFF" stroke="#A7DCD0" stroke-width="2"/>
+<text x="1358.0" y="856.25" text-anchor="middle" font-family="Lato, DejaVu Sans, sans-serif" font-size="25" font-weight="700" fill="#167C6D">Control Broker</text>
+<rect x="1574" y="817" width="480" height="61" rx="30.5" fill="#FFFFFF" stroke="#A7DCD0" stroke-width="2"/>
+<text x="1814.0" y="856.25" text-anchor="middle" font-family="Lato, DejaVu Sans, sans-serif" font-size="25" font-weight="700" fill="#167C6D">Gateway status</text>
+<path d="M 484 847 L 430 847" fill="none" stroke="#139B87" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+<polygon points="430,847 448.0,838.0 448.0,856.0" fill="#139B87"/>
+<path d="M 844 847 L 791 847" fill="none" stroke="#139B87" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+<polygon points="791,847 809.0,838.0 809.0,856.0" fill="#139B87"/>
+<path d="M 1204 847 L 1151 847" fill="none" stroke="#139B87" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+<polygon points="1151,847 1169.0,838.0 1169.0,856.0" fill="#139B87"/>
+<path d="M 1565 847 L 1511 847" fill="none" stroke="#139B87" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+<polygon points="1511,847 1529.0,838.0 1529.0,856.0" fill="#139B87"/>
+<text x="132" y="914" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="22" font-weight="400" fill="#5B746D">Gateway-originated status; the robot receiver has no radio acknowledgement.</text>
+<path d="M 108 987 L 2772 987" fill="none" stroke="#B8DCD9" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="108" y="1010" width="308" height="48" rx="24.0" fill="#E4F5F3" stroke="#E4F5F3" stroke-width="0"/>
+<text x="262.0" y="1042.4" text-anchor="middle" font-family="Lato, DejaVu Sans, sans-serif" font-size="24" font-weight="700" fill="#087F8C">VIDEO / MEDIA PLANE</text>
+<text x="445" y="1043" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="27" font-weight="600" fill="#52647A">Direct Internet uplink through MediaMTX · separate from command delivery</text>
+<rect x="112" y="1137" width="386" height="170" rx="20" fill="#FFFFFF" stroke="#CBD8E6" stroke-width="2"/>
+<rect x="112" y="1157" width="8" height="130" rx="4" fill="#087F8C" stroke="none" stroke-width="1"/>
+<text x="141" y="1178" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="22" font-weight="800" fill="#087F8C" letter-spacing="1.4">OPERATOR</text>
+<text x="141" y="1235" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="35" font-weight="800" fill="#14263D">Browser playback</text>
+<text x="141" y="1278" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="26" font-weight="400" fill="#52647A">WebRTC / WHEP</text>
+<rect x="787" y="1137" width="420" height="170" rx="20" fill="#FFFFFF" stroke="#CBD8E6" stroke-width="2"/>
+<rect x="787" y="1157" width="8" height="130" rx="4" fill="#087F8C" stroke="none" stroke-width="1"/>
+<text x="816" y="1178" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="22" font-weight="800" fill="#087F8C" letter-spacing="1.4">AWS EC2</text>
+<text x="816" y="1235" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="37" font-weight="800" fill="#14263D">MediaMTX relay</text>
+<text x="816" y="1278" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="26" font-weight="400" fill="#52647A">RTSP ingest · WebRTC out</text>
+<rect x="2258" y="1119" width="416" height="170" rx="20" fill="#FFFFFF" stroke="#CBD8E6" stroke-width="2"/>
+<rect x="2258" y="1139" width="8" height="130" rx="4" fill="#087F8C" stroke="none" stroke-width="1"/>
+<text x="2287" y="1160" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="22" font-weight="800" fill="#087F8C" letter-spacing="1.4">ON ROBOT</text>
+<text x="2287" y="1217" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="37" font-weight="800" fill="#14263D">Radxa Rock 3C</text>
+<text x="2287" y="1260" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="26" font-weight="400" fill="#52647A">FFmpeg · H.264 encoder</text>
+<rect x="2258" y="1311" width="416" height="150" rx="20" fill="#FFFFFF" stroke="#CBD8E6" stroke-width="2"/>
+<rect x="2258" y="1331" width="8" height="110" rx="4" fill="#087F8C" stroke="none" stroke-width="1"/>
+<text x="2287" y="1352" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="22" font-weight="800" fill="#087F8C" letter-spacing="1.4">ON ROBOT</text>
+<text x="2287" y="1409" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="36" font-weight="800" fill="#14263D">USB camera</text>
+<text x="2287" y="1452" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="26" font-weight="400" fill="#52647A">V4L2 capture</text>
+<path d="M 787 1221 L 506 1221" fill="none" stroke="#087F8C" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+<polygon points="506,1221 524.0,1212.0 524.0,1230.0" fill="#087F8C"/>
+<rect x="521" y="1065" width="260" height="49" rx="24.5" fill="#E4F5F3" stroke="#E4F5F3" stroke-width="0"/>
+<text x="651.0" y="1098.25" text-anchor="middle" font-family="Lato, DejaVu Sans, sans-serif" font-size="25" font-weight="700" fill="#087F8C">WebRTC / WHEP</text>
+<path d="M 2258 1221 L 1215 1221" fill="none" stroke="#087F8C" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+<polygon points="1215,1221 1233.0,1212.0 1233.0,1230.0" fill="#087F8C"/>
+<rect x="1564" y="1137" width="314" height="53" rx="26.5" fill="#E4F5F3" stroke="#E4F5F3" stroke-width="0"/>
+<text x="1721.0" y="1171.9" text-anchor="middle" font-family="Lato, DejaVu Sans, sans-serif" font-size="24" font-weight="700" fill="#087F8C">RTSP / Internet · H.264</text>
+<path d="M 2674 1386 L 2739 1386" fill="none" stroke="#087F8C" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 2739 1386 L 2739 1203" fill="none" stroke="#087F8C" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 2739 1203 L 2682 1203" fill="none" stroke="#087F8C" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+<polygon points="2682,1203 2700.0,1194.0 2700.0,1212.0" fill="#087F8C"/>
+<rect x="2684" y="1265" width="92" height="46" rx="23.0" fill="#E4F5F3" stroke="#E4F5F3" stroke-width="0"/>
+<text x="2730.0" y="1296.05" text-anchor="middle" font-family="Lato, DejaVu Sans, sans-serif" font-size="23" font-weight="700" fill="#087F8C">USB</text>
+<path d="M 108 1515 L 2772 1515" fill="none" stroke="#D7E1EA" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="110" y="1561" text-anchor="start" font-family="Lato, DejaVu Sans, sans-serif" font-size="26" font-weight="600" fill="#52647A">LoRa frame: 16 bytes · AES-256-CBC · CRC32 · duplicate sequence check</text>
+<text x="2770" y="1561" text-anchor="end" font-family="Lato, DejaVu Sans, sans-serif" font-size="22" font-weight="400" fill="#738296">Field range reported from project test</text>
+</svg>
